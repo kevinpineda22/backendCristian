@@ -1,5 +1,5 @@
 
-import supabaseService from '../services/supabaseService';
+import {supabase} from '../services/supabaseService';
 
 import nodemailer from 'nodemailer';
 import multer from 'multer';
