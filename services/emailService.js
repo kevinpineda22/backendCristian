@@ -14,6 +14,9 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+// Obtener el directorio actual con import.meta.url (compatible con ESModules)
+const __dirname = path.dirname(new URL(import.meta.url).pathname);
+
 export const sendEmail = async (to, subject, htmlContent, attachmentUrl = null) => {
   try {
     let attachments = [];
