@@ -2,9 +2,11 @@ import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 import axios from 'axios';
 import fs from 'fs';
+import path from 'path';
 
 dotenv.config();  // Cargar las variables de entorno desde el archivo .env
 
+// Crear el transportador de correo
 const transporter = nodemailer.createTransport({
   service: 'gmail',  // Usamos Gmail como servicio SMTP
   auth: {
@@ -19,7 +21,7 @@ export const sendEmail = async (to, subject, htmlContent, attachmentUrl = null) 
 
     // Si tenemos una URL de archivo, descargamos el archivo y lo agregamos a los adjuntos
     if (attachmentUrl) {
-      // Descargar el archivo desde la URL
+      // Descargar el archivo desde la URL de Supabase
       const response = await axios({
         url: attachmentUrl,
         method: 'GET',
@@ -27,36 +29,44 @@ export const sendEmail = async (to, subject, htmlContent, attachmentUrl = null) 
       });
 
       // Crear un nombre temporal para el archivo
-      const tempFilePath = `/tmp/${Date.now()}-temp-file.pdf`;
+      const tempFilePath = path.join(__dirname, `/tmp/${Date.now()}-temp-file.pdf`);
 
-      // Guardar el archivo en el sistema temporal
+      // Crear el archivo temporal y guardarlo en el sistema de archivos
       const writer = fs.createWriteStream(tempFilePath);
       response.data.pipe(writer);
 
-      writer.on('finish', () => {
-        // Después de que el archivo se haya guardado, enviamos el correo
-        attachments.push({
-          filename: 'archivo.pdf',
-          path: tempFilePath,  // Usamos el archivo temporal
-        });
-
-        // Enviar el correo con el archivo adjunto
-        transporter.sendMail({
-          from: `"Merkahorro" <${process.env.EMAIL_USER}>`, // Nombre y correo de quien envía
-          to,
-          subject,
-          html: htmlContent, // Si tienes HTML en el correo
-          attachments,
-        }).then(() => {
-          console.log(`📨 Correo enviado a ${to}`);
-        }).catch((error) => {
-          console.error('❌ Error al enviar el correo:', error);
-        });
+      // Esperamos a que se complete la escritura del archivo
+      await new Promise((resolve, reject) => {
+        writer.on('finish', resolve);
+        writer.on('error', reject);
       });
 
-      writer.on('error', (error) => {
-        console.error('❌ Error al descargar el archivo:', error);
+      // Después de que el archivo se haya guardado, lo agregamos a los adjuntos
+      attachments.push({
+        filename: 'archivo.pdf',
+        path: tempFilePath,  // Usamos el archivo temporal
       });
+
+      // Enviar el correo con el archivo adjunto
+      await transporter.sendMail({
+        from: `"Merkahorro" <${process.env.EMAIL_USER}>`, // Nombre y correo de quien envía
+        to,
+        subject,
+        html: htmlContent, // Si tienes HTML en el correo
+        attachments,
+      });
+
+      console.log(`📨 Correo enviado a ${to}`);
+
+      // Eliminar el archivo temporal después de enviarlo
+      fs.unlink(tempFilePath, (err) => {
+        if (err) {
+          console.error('❌ Error al eliminar el archivo temporal:', err);
+        } else {
+          console.log('🗑️ Archivo temporal eliminado');
+        }
+      });
+
     } else {
       // Si no tenemos archivo, solo enviamos el correo sin adjuntos
       await transporter.sendMail({
@@ -65,8 +75,10 @@ export const sendEmail = async (to, subject, htmlContent, attachmentUrl = null) 
         subject,
         html: htmlContent,
       });
+
       console.log(`📨 Correo enviado a ${to}`);
     }
+
   } catch (error) {
     console.error('❌ Error al enviar el correo:', error);
   }
