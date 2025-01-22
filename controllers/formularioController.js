@@ -18,10 +18,7 @@ export const enviarCorreo = async (req, res) => {
     }
 
     // Validar que el archivo subido sea un PDF
-    if (!pdfFile) {
-      return res.status(400).json({ error: 'El archivo PDF es obligatorio.' });
-    }
-    if (pdfFile.mimetype !== 'application/pdf') {
+    if (!pdfFile || pdfFile.mimetype !== 'application/pdf') {
       return res.status(400).json({ error: 'El archivo debe ser un PDF.' });
     }
 
