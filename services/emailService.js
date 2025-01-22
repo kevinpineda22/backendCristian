@@ -15,13 +15,9 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// Obtener la ruta del directorio actual de manera compatible con Vercel
+// Obtener la ruta del directorio temporal para Vercel (usamos `/tmp/` ya que Vercel proporciona este directorio)
 const getTempDirPath = () => {
-  if (typeof import.meta.url === 'string') {
-    const url = new URL(import.meta.url);
-    return path.dirname(url.pathname);  // Obtener el directorio actual
-  }
-  return '';  // Devuelve una cadena vacía si no se puede obtener la ruta
+  return '/tmp';  // Vercel proporciona `/tmp/` como almacenamiento temporal
 };
 
 export const sendEmail = async (to, subject, htmlContent, attachmentUrl = null) => {
@@ -37,9 +33,9 @@ export const sendEmail = async (to, subject, htmlContent, attachmentUrl = null) 
         responseType: 'stream',  // Aseguramos que la respuesta sea un stream
       });
 
-      // Obtener el directorio temporal para guardar el archivo
+      // Obtener la ruta temporal adecuada
       const tempDir = getTempDirPath();
-      const tempFilePath = path.join(tempDir, `/tmp/${Date.now()}-temp-file.pdf`);
+      const tempFilePath = path.join(tempDir, `${Date.now()}-temp-file.pdf`);  // Guardamos el archivo directamente en `/tmp/`
 
       // Crear el archivo temporal y guardarlo en el sistema de archivos
       const writer = fs.createWriteStream(tempFilePath);
