@@ -39,6 +39,23 @@ export const enviarCorreo = async (req, res) => {
     // Obtener la URL pública del archivo subido
     const fileUrl = `${process.env.SUPABASE_URL}/storage/v1/object/public/pdf-cristian/${data.path}`;
 
+    // Aquí puedes guardar los datos en la base de datos de Supabase
+    const { data: dbData, error: dbError } = await supabase
+      .from('Automatizacion_cristian') // Nombre de la tabla donde deseas guardar los datos
+      .insert([
+        {
+          descripcion,
+          sede,
+          fecha_inicial,
+          fecha_final,
+          correo_asignado,
+          pdf_url: fileUrl,  // Guardamos la URL del archivo PDF en la base de datos
+        }
+      ]);
+
+    if (dbError) {
+      return res.status(500).json({ error: 'Error al guardar los datos en la base de datos', details: dbError.message });
+    }
 
     // Configuración del correo
     const htmlContent = `
@@ -53,7 +70,8 @@ export const enviarCorreo = async (req, res) => {
     await sendEmail(correo_asignado, 'Detalles del formulario', htmlContent, fileUrl);
 
     // Responder al cliente indicando que todo ha ido bien
-    res.status(200).json({ message: 'Correo enviado exitosamente' });
+    res.status(200).json({ message: 'Correo enviado y datos guardados exitosamente' });
+
   } catch (error) {
     console.error('Error al enviar el correo:', error);
     res.status(500).json({ error: `Hubo un error al enviar el correo: ${error.message}` });
@@ -67,7 +85,7 @@ export default function handler(req, res) {
       if (err) {
         return res.status(400).json({ error: 'Error al subir el archivo' });
       }
-      enviarCorreo(req, res);  // Llamamos la función que maneja el correo
+      enviarCorreo(req, res);  // Llamamos la función que maneja el correo y el almacenamiento en Supabase
     });
   } else {
     res.status(405).json({ error: 'Método no permitido' });
