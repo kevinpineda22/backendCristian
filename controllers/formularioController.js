@@ -1,22 +1,19 @@
 import nodemailer from 'nodemailer';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import fs from 'fs';
-import multer from 'multer';
 
-// Configuración de almacenamiento de Multer para manejar el archivo PDF
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const upload = multer({ dest: 'uploads/' });
 
-export const uploadPdf = upload.single('pdf'); // Asegúrate de que el campo en el frontend se llame 'pdf'
-
-export const enviarCorreo = async (req, res) => {
+export const enviarCorreo = async (req, res, next) => {
   try {
+    console.log("Formulario recibido:", req.body);
+    console.log("Archivo recibido:", req.file);
+
     const { descripcion, sedes, fechaInicial, fechaFinal, correo } = req.body;
     const pdfFile = req.file;
 
-    // Validar que todos los campos requeridos estén presentes
+    // Validar que todos los campos requeridos están presentes
     if (!descripcion || !sedes || !fechaInicial || !fechaFinal || !correo) {
       return res.status(400).json({ error: 'Todos los campos son obligatorios.' });
     }
@@ -26,16 +23,16 @@ export const enviarCorreo = async (req, res) => {
       return res.status(400).json({ error: 'El archivo debe ser un PDF.' });
     }
 
-    // Configuración de Nodemailer para enviar el correo
+    // Configurar el transporte de Nodemailer
     const transporter = nodemailer.createTransport({
-      service: 'gmail', // Utiliza el servicio que prefieras
+      service: 'gmail',
       auth: {
-        user: process.env.EMAIL_USER, // Asegúrate de definir esta variable de entorno en Vercel
-        pass: process.env.EMAIL_PASS, // También define esta variable
-      },
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
     });
 
-    // Configuración del correo
+    // Configurar el contenido del correo
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: correo,
@@ -43,9 +40,9 @@ export const enviarCorreo = async (req, res) => {
       text: `Descripción: ${descripcion}\nSedes: ${sedes}\nFecha Inicial: ${fechaInicial}\nFecha Final: ${fechaFinal}`,
       attachments: [
         {
-          path: path.join(__dirname, '../../uploads', pdfFile.filename),
-        },
-      ],
+          path: path.join(__dirname, '../../uploads', pdfFile.filename)
+        }
+      ]
     };
 
     // Enviar el correo
@@ -53,9 +50,10 @@ export const enviarCorreo = async (req, res) => {
     res.status(200).json({ message: 'Correo enviado exitosamente' });
   } catch (error) {
     console.error('Error al enviar el correo:', error);
-    res.status(500).json({ error: 'Hubo un error al enviar el correo' });
+    next(error); // Pasar el error al middleware de manejo de errores
   }
 };
+
 
 // Exportar el handler para la ruta API de Vercel
 export default function handler(req, res) {
@@ -70,3 +68,4 @@ export default function handler(req, res) {
     res.status(405).json({ error: 'Método no permitido' });
   }
 }
+
