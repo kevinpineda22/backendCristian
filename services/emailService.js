@@ -59,4 +59,3 @@ export const sendEmail = async (to, subject, htmlContent, attachmentUrl = null) 
     console.error('❌ Error al enviar el correo:', error);
   }
 };
-  
