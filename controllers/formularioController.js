@@ -37,7 +37,8 @@ export const enviarCorreo = async (req, res) => {
     }
 
     // Obtener la URL pública del archivo subido
-    const fileUrl = `${process.env.SUPABASE_URL}/storage/v1/object/public/${data.path}`;
+    const fileUrl = `${process.env.SUPABASE_URL}/storage/v1/object/public/pdf-cristian/${data.path}`;
+
 
     // Configuración del correo
     const htmlContent = `
