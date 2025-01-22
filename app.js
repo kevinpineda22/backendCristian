@@ -29,3 +29,5 @@ app.use((err, req, res, next) => {
 app.listen(port, () => {
   console.log(`Servidor corriendo en http://localhost:${port}`);  // Corregido la interpolación
 });
+
+export default app;
