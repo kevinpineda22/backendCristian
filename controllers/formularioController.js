@@ -1,17 +1,15 @@
-
-import {supabase} from '../services/supabaseService';
-
+import { supabase } from '../services/supabaseService';
 import nodemailer from 'nodemailer';
 import multer from 'multer';
 
-// Configura Multer para procesar la carga de archivos
-const storage = multer.memoryStorage();  // Usamos memoryStorage para evitar almacenamiento local
+// Configuración de Multer para procesar la carga de archivos en memoria
+const storage = multer.memoryStorage();
 const upload = multer({ storage }).single('pdf');
 
 // Función para manejar el envío del correo y el almacenamiento en Supabase
 export const enviarCorreo = async (req, res) => {
   try {
-    // Obtener los datos del formulario (con los nuevos nombres de los campos)
+    // Obtener los datos del formulario
     const { descripcion, sede, fecha_inicial, fecha_final, correo_asignado } = req.body;
     const pdfFile = req.file;
 
@@ -25,20 +23,20 @@ export const enviarCorreo = async (req, res) => {
       return res.status(400).json({ error: 'El archivo debe ser un PDF.' });
     }
 
-    // Subir el archivo PDF a Supabase Storage (usando el bucket pdf-cristian)
+    // Subir el archivo PDF a Supabase Storage
     const { data, error: uploadError } = await supabase
       .storage
-      .from('pdf-cristian')  // Utilizamos el bucket pdf-cristian
+      .from('pdf-cristian')  // Asegúrate de que este sea el nombre correcto del bucket
       .upload(`pdfs/${Date.now()}-${pdfFile.originalname}`, pdfFile.buffer, {
         contentType: pdfFile.mimetype,
-        upsert: true,  // Para reemplazar el archivo si ya existe
+        upsert: true,  // Esto reemplaza el archivo si ya existe
       });
 
     if (uploadError) {
       return res.status(500).json({ error: 'Error al subir el archivo a Supabase Storage', details: uploadError.message });
     }
 
-    // Obtener la URL del archivo subido
+    // Obtener la URL pública del archivo subido
     const fileUrl = `${process.env.SUPABASE_URL}/storage/v1/object/public/${data.path}`;
 
     // Configuración de Nodemailer para enviar el correo
