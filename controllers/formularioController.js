@@ -1,6 +1,6 @@
 import supabase from '../services/supabaseService.js';
 import multer from 'multer';
-import { sendEmail } from '../services/emailService.js';  // Asegúrate de que la ruta sea correcta
+import  sendEmail  from '../services/emailService.js';  // Asegúrate de que la ruta sea correcta
 
 // Configuración de Multer para procesar la carga de archivos en memoria
 const storage = multer.memoryStorage();
