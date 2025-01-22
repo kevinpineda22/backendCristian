@@ -13,6 +13,14 @@ app.use(express.urlencoded({ extended: true }));
 // Rutas
 app.use('/api', routes);
 
+// Ruta de prueba para verificar el estado del servidor
+app.get('/', (req, res) => {
+    res.status(200).json({
+      message: '♥Corriendo parchaito♥',
+      timestamp: new Date(),
+    });
+  });
+
 // Manejo global de errores
 app.use((err, req, res, next) => {
   console.error('Error inesperado:', err.stack);
