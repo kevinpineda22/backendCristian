@@ -1,20 +1,25 @@
 import nodemailer from 'nodemailer';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { createClient } from '@supabase/supabase-js';
+import multer from 'multer';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Configura Supabase
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
-export const enviarCorreo = async (req, res, next) => {
+// Configura Multer para procesar la carga de archivos
+const storage = multer.memoryStorage();  // Usamos memoryStorage para evitar almacenamiento local
+const upload = multer({ storage }).single('pdf');
+
+// Función para manejar el envío del correo y el almacenamiento en Supabase
+export const enviarCorreo = async (req, res) => {
   try {
-    console.log("Formulario recibido:", req.body);
-    console.log("Archivo recibido:", req.file);
-
-    const { descripcion, sedes, fechaInicial, fechaFinal, correo } = req.body;
+    // Obtener los datos del formulario (con los nuevos nombres de los campos)
+    const { descripcion, sede, fecha_inicial, fecha_final, correo_asignado } = req.body;
     const pdfFile = req.file;
 
     // Validar que todos los campos requeridos están presentes
-    if (!descripcion || !sedes || !fechaInicial || !fechaFinal || !correo) {
+    if (!descripcion || !sede || !fecha_inicial || !fecha_final || !correo_asignado) {
       return res.status(400).json({ error: 'Todos los campos son obligatorios.' });
     }
 
@@ -23,42 +28,59 @@ export const enviarCorreo = async (req, res, next) => {
       return res.status(400).json({ error: 'El archivo debe ser un PDF.' });
     }
 
-    // Configurar el transporte de Nodemailer
+    // Subir el archivo PDF a Supabase Storage (usando el bucket pdf-cristian)
+    const { data, error: uploadError } = await supabase
+      .storage
+      .from('pdf-cristian')  // Utilizamos el bucket pdf-cristian
+      .upload(`pdfs/${Date.now()}-${pdfFile.originalname}`, pdfFile.buffer, {
+        contentType: pdfFile.mimetype,
+        upsert: true,  // Para reemplazar el archivo si ya existe
+      });
+
+    if (uploadError) {
+      return res.status(500).json({ error: 'Error al subir el archivo a Supabase Storage', details: uploadError.message });
+    }
+
+    // Obtener la URL del archivo subido
+    const fileUrl = `${supabaseUrl}/storage/v1/object/public/${data.path}`;
+
+    // Configuración de Nodemailer para enviar el correo
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
+      service: 'gmail',  // O el servicio que prefieras
       auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-      }
+        pass: process.env.EMAIL_PASS,
+      },
     });
 
-    // Configurar el contenido del correo
+    // Configuración del correo
     const mailOptions = {
       from: process.env.EMAIL_USER,
-      to: correo,
+      to: correo_asignado,
       subject: 'Detalles del formulario',
-      text: `Descripción: ${descripcion}\nSedes: ${sedes}\nFecha Inicial: ${fechaInicial}\nFecha Final: ${fechaFinal}`,
+      text: `Descripción: ${descripcion}\nSede: ${sede}\nFecha Inicial: ${fecha_inicial}\nFecha Final: ${fecha_final}\n\nPuedes descargar el PDF desde este enlace: ${fileUrl}`,
       attachments: [
         {
-          path: path.join(__dirname, '../../uploads', pdfFile.filename)
-        }
-      ]
+          filename: pdfFile.originalname,
+          path: fileUrl,  // Usamos la URL del archivo en Supabase
+        },
+      ],
     };
 
     // Enviar el correo
     await transporter.sendMail(mailOptions);
+
     res.status(200).json({ message: 'Correo enviado exitosamente' });
   } catch (error) {
     console.error('Error al enviar el correo:', error);
-    next(error); // Pasar el error al middleware de manejo de errores
+    res.status(500).json({ error: `Hubo un error al enviar el correo: ${error.message}` });
   }
 };
 
-
-// Exportar el handler para la ruta API de Vercel
+// Exportar el handler para la ruta API
 export default function handler(req, res) {
   if (req.method === 'POST') {
-    uploadPdf(req, res, (err) => {
+    upload(req, res, (err) => {
       if (err) {
         return res.status(400).json({ error: 'Error al subir el archivo' });
       }
@@ -68,4 +90,3 @@ export default function handler(req, res) {
     res.status(405).json({ error: 'Método no permitido' });
   }
 }
-
