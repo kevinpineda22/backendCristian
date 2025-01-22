@@ -26,11 +26,6 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Ocurrió un error en el servidor. Intenta nuevamente más tarde.' });
 });
 
-<<<<<<< HEAD
-
-=======
-// Iniciar el servidor
->>>>>>> fc971584d461576d0539a71e1ea344b72ee1ca65
 app.listen(port, () => {
   console.log(`Servidor corriendo en http://localhost:${port}`);  // Corregido la interpolación
 });
