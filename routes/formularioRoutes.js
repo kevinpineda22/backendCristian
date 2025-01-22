@@ -1,9 +1,10 @@
 import express from 'express';
-import { enviarCorreo } from '../controllers/formularioController.js';
+import { enviarFormulario } from '../controllers/formularioController.js'; // Cambiado
 import { upload } from '../services/multerConfig.js';
 
 const router = express.Router();
 
-router.post('/enviar-email', upload.single('pdf'), enviarCorreo);
+// Ruta para guardar datos y enviar correo
+router.post('/enviar-email', upload.single('pdf'), enviarFormulario); // Cambiado
 
 export default router;
