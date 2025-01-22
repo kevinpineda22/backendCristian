@@ -1,4 +1,6 @@
-import supabase from './services/supabaseService';  // Importa el cliente de Supabase desde services
+
+import supabaseService from '../services/supabaseService';
+
 import nodemailer from 'nodemailer';
 import multer from 'multer';
 
