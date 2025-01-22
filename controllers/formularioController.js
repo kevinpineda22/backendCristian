@@ -13,17 +13,17 @@ export const enviarCorreo = async (req, res) => {
     const pdfFile = req.file;
 
     // Validaciones de los campos
-    if (!descripcion || !sede || !fecha_inicial || !fecha_final || !correo_asignado || !pdfFile) {
-      return res.status(400).json({ error: 'Todos los campos son obligatorios, incluido el archivo PDF.' });
+    if (!descripcion || !sede || !fecha_inicial || !fecha_final || !correo_asignado) {
+      return res.status(400).json({ error: 'Todos los campos son obligatorios.' });
     }
 
-    if (pdfFile.mimetype !== 'application/pdf') {
+    if (!pdfFile || pdfFile.mimetype !== 'application/pdf') {
       return res.status(400).json({ error: 'El archivo debe ser un PDF.' });
     }
 
     // Subir el archivo PDF a Supabase Storage
     const fileName = `pdfs/${Date.now()}-${pdfFile.originalname}`;
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { data, error: uploadError } = await supabase.storage
       .from('pdf-cristian')
       .upload(fileName, pdfFile.buffer, { contentType: pdfFile.mimetype });
 
@@ -31,12 +31,12 @@ export const enviarCorreo = async (req, res) => {
       return res.status(500).json({ error: 'Error al subir el archivo a Supabase Storage', details: uploadError.message });
     }
 
-    const pdfUrl = `${process.env.SUPABASE_URL}/storage/v1/object/public/pdf-cristian/${uploadData.path}`;
+    const fileUrl = `${process.env.SUPABASE_URL}/storage/v1/object/public/pdf-cristian/${data.path}`;
 
     // Guardar los datos en la base de datos
     const { error: dbError } = await supabase
       .from('Automatizacion_cristian')
-      .insert([{ descripcion, sede, fecha_inicial, fecha_final, correo_asignado, pdf: pdfUrl, estado: 'Pendiente', observacion: '' }]);
+      .insert([{ descripcion, sede, fecha_inicial, fecha_final, correo_asignado, pdf_url: fileUrl, estado: 'pendiente', observacion: '' }]);
 
     if (dbError) {
       return res.status(500).json({ error: 'Error al guardar los datos en la base de datos', details: dbError.message });
@@ -48,11 +48,11 @@ export const enviarCorreo = async (req, res) => {
       <p><strong>Sede:</strong> ${sede}</p>
       <p><strong>Fecha Inicial:</strong> ${fecha_inicial}</p>
       <p><strong>Fecha Final:</strong> ${fecha_final}</p>
-      <p><strong>Puedes descargar el PDF desde este enlace:</strong> <a href="${pdfUrl}">Ver PDF</a></p>
+      <p><strong>Puedes descargar el PDF desde este enlace:</strong> <a href="${fileUrl}">Ver PDF</a></p>
     `;
 
     // Enviar el correo
-    await sendEmail(correo_asignado, 'Detalles del formulario', htmlContent, pdfUrl);
+    await sendEmail(correo_asignado, 'Detalles del formulario', htmlContent, fileUrl);
 
     res.status(200).json({ message: 'Correo enviado y datos guardados exitosamente.' });
   } catch (error) {
@@ -61,7 +61,16 @@ export const enviarCorreo = async (req, res) => {
   }
 };
 
-// Exportación por defecto (si necesitas un handler adicional)
-export default {
-  enviarCorreo,
-};
+// Función handler para manejar la solicitud de API
+export default function handler(req, res) {
+  if (req.method === 'POST') {
+    upload(req, res, (err) => {
+      if (err) {
+        return res.status(400).json({ error: 'Error al subir el archivo.' });
+      }
+      enviarCorreo(req, res);
+    });
+  } else {
+    res.status(405).json({ error: 'Método no permitido.' });
+  }
+}
