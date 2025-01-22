@@ -6,13 +6,13 @@ import { sendEmail } from '../services/emailService.js';
 const storage = multer.memoryStorage();
 const upload = multer({ storage }).single('pdf'); // Solo un archivo PDF
 
-// Función para manejar el envío del correo y el almacenamiento en Supabase
-export const enviarCorreo = async (req, res) => {
+// Función para manejar el envío del formulario
+export const enviarFormulario = async (req, res) => {
   try {
     const { descripcion, sede, fecha_inicial, fecha_final, correo_asignado } = req.body;
     const pdfFile = req.file;
 
-    // Validaciones de los campos
+    // Validar que todos los campos requeridos están presentes
     if (!descripcion || !sede || !fecha_inicial || !fecha_final || !correo_asignado) {
       return res.status(400).json({ error: 'Todos los campos son obligatorios.' });
     }
@@ -23,7 +23,7 @@ export const enviarCorreo = async (req, res) => {
 
     // Subir el archivo PDF a Supabase Storage
     const fileName = `pdfs/${Date.now()}-${pdfFile.originalname}`;
-    const { data, error: uploadError } = await supabase.storage
+    const { data: storageData, error: uploadError } = await supabase.storage
       .from('pdf-cristian')
       .upload(fileName, pdfFile.buffer, { contentType: pdfFile.mimetype });
 
@@ -31,32 +31,33 @@ export const enviarCorreo = async (req, res) => {
       return res.status(500).json({ error: 'Error al subir el archivo a Supabase Storage', details: uploadError.message });
     }
 
-    const fileUrl = `${process.env.SUPABASE_URL}/storage/v1/object/public/pdf-cristian/${data.path}`;
+    const pdfUrl = `${process.env.SUPABASE_URL}/storage/v1/object/public/pdf-cristian/${storageData.path}`;
 
     // Guardar los datos en la base de datos
-    const { error: dbError } = await supabase
+    const { data: dbData, error: dbError } = await supabase
       .from('Automatizacion_cristian')
-      .insert([{ descripcion, sede, fecha_inicial, fecha_final, correo_asignado, pdf: fileUrl, estado: 'pendiente', observacion: '' }]);
+      .insert([{ descripcion, sede, fecha_inicial, fecha_final, correo_asignado, pdf_url: pdfUrl, estado: 'pendiente', observacion: '' }])
+      .select('*') // Devolver los datos insertados para usarlos en el correo
+      .single();
 
     if (dbError) {
       return res.status(500).json({ error: 'Error al guardar los datos en la base de datos', details: dbError.message });
     }
 
-    // Configuración del correo
+    // Datos guardados correctamente, enviar el correo
     const htmlContent = `
-      <p><strong>Descripción:</strong> ${descripcion}</p>
-      <p><strong>Sede:</strong> ${sede}</p>
-      <p><strong>Fecha Inicial:</strong> ${fecha_inicial}</p>
-      <p><strong>Fecha Final:</strong> ${fecha_final}</p>
-      <p><strong>Puedes descargar el PDF desde este enlace:</strong> <a href="${fileUrl}">Ver PDF</a></p>
+      <p><strong>Descripción:</strong> ${dbData.descripcion}</p>
+      <p><strong>Sede:</strong> ${dbData.sede}</p>
+      <p><strong>Fecha Inicial:</strong> ${dbData.fecha_inicial}</p>
+      <p><strong>Fecha Final:</strong> ${dbData.fecha_final}</p>
+      <p><strong>Puedes descargar el PDF desde este enlace:</strong> <a href="${dbData.pdf_url}">Ver PDF</a></p>
     `;
 
-    // Enviar el correo
-    await sendEmail(correo_asignado, 'Detalles del formulario', htmlContent, fileUrl);
+    await sendEmail(dbData.correo_asignado, 'Detalles del formulario', htmlContent, dbData.pdf_url);
 
-    res.status(200).json({ message: 'Correo enviado y datos guardados exitosamente.' });
+    res.status(200).json({ message: 'Datos guardados y correo enviado exitosamente.', data: dbData });
   } catch (error) {
-    console.error('Error al enviar el correo:', error);
+    console.error('Error al procesar la solicitud:', error);
     res.status(500).json({ error: `Hubo un error al procesar la solicitud: ${error.message}` });
   }
 };
@@ -68,7 +69,7 @@ export default function handler(req, res) {
       if (err) {
         return res.status(400).json({ error: 'Error al subir el archivo.' });
       }
-      enviarCorreo(req, res);
+      enviarFormulario(req, res);
     });
   } else {
     res.status(405).json({ error: 'Método no permitido.' });
