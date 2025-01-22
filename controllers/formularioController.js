@@ -24,7 +24,7 @@ export const enviarCorreo = async (req, res) => {
     // Subir el archivo PDF a Supabase Storage
     const fileName = `pdfs/${Date.now()}-${pdfFile.originalname}`;
     const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('pdf-cristian') // Cambia por el nombre de tu bucket
+      .from('pdf-cristian')
       .upload(fileName, pdfFile.buffer, { contentType: pdfFile.mimetype });
 
     if (uploadError) {
@@ -61,16 +61,7 @@ export const enviarCorreo = async (req, res) => {
   }
 };
 
-// Función handler para manejar la solicitud de API
-export default function handler(req, res) {
-  if (req.method === 'POST') {
-    upload(req, res, (err) => {
-      if (err) {
-        return res.status(400).json({ error: 'Error al subir el archivo.' });
-      }
-      enviarCorreo(req, res);
-    });
-  } else {
-    res.status(405).json({ error: 'Método no permitido.' });
-  }
-}
+// Exportación por defecto (si necesitas un handler adicional)
+export default {
+  enviarCorreo,
+};
