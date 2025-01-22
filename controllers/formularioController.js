@@ -1,10 +1,6 @@
 import supabase from '../services/supabaseService.js';
 import nodemailer from 'nodemailer';
-import multer from 'multer';
-
-// Configuración de Multer para procesar la carga de archivos en memoria
-const storage = multer.memoryStorage();
-const upload = multer({ storage }).single('pdf');
+import { upload } from '../services/multerConfig.js'; // Importar la configuración de multer
 
 // Función para manejar el envío del correo y el almacenamiento en Supabase
 export const enviarCorreo = async (req, res) => {

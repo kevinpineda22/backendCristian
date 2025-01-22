@@ -1,13 +1,7 @@
 import multer from 'multer';
-import path from 'path';
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/'); // Carpeta donde se guardarán los archivos
-  },
-  filename: (req, file, cb) => {
-    cb(null, file.originalname); // Guardar con el nombre original del archivo
-  }
-});
+// Configuración para almacenamiento en memoria (sin guardar archivos localmente)
+const storage = multer.memoryStorage(); // Usamos memoryStorage para que los archivos estén en memoria
 
+// Exportar la configuración de multer
 export const upload = multer({ storage });
