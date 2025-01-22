@@ -20,6 +20,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Ocurrió un error en el servidor. Intenta nuevamente más tarde.' });
 });
 
+
 app.listen(port, () => {
   console.log(`Servidor corriendo en http://localhost:${port}`);
 });
