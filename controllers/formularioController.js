@@ -1,11 +1,6 @@
+import supabase from './services/supabaseService';  // Importa el cliente de Supabase desde services
 import nodemailer from 'nodemailer';
-import { createClient } from '@supabase/supabase-js';
 import multer from 'multer';
-
-// Configura Supabase
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Configura Multer para procesar la carga de archivos
 const storage = multer.memoryStorage();  // Usamos memoryStorage para evitar almacenamiento local
@@ -42,7 +37,7 @@ export const enviarCorreo = async (req, res) => {
     }
 
     // Obtener la URL del archivo subido
-    const fileUrl = `${supabaseUrl}/storage/v1/object/public/${data.path}`;
+    const fileUrl = `${process.env.SUPABASE_URL}/storage/v1/object/public/${data.path}`;
 
     // Configuración de Nodemailer para enviar el correo
     const transporter = nodemailer.createTransport({
