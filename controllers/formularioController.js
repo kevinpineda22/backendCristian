@@ -1,5 +1,10 @@
 import supabase from '../services/supabaseService.js';
+import multer from 'multer';
 import { sendEmail } from '../services/emailService.js';
+
+// Configuración de Multer para la carga de archivos en memoria
+const storage = multer.memoryStorage();
+const upload = multer({ storage }).single('pdf'); // Solo un archivo PDF
 
 // Función para manejar el envío del correo y el almacenamiento en Supabase
 export const enviarCorreo = async (req, res) => {
@@ -7,47 +12,31 @@ export const enviarCorreo = async (req, res) => {
     const { descripcion, sede, fecha_inicial, fecha_final, correo_asignado } = req.body;
     const pdfFile = req.file;
 
-    // Validar que todos los campos requeridos están presentes
+    // Validaciones de los campos
     if (!descripcion || !sede || !fecha_inicial || !fecha_final || !correo_asignado) {
       return res.status(400).json({ error: 'Todos los campos son obligatorios.' });
     }
 
-    // Validar que el archivo subido sea un PDF
     if (!pdfFile || pdfFile.mimetype !== 'application/pdf') {
       return res.status(400).json({ error: 'El archivo debe ser un PDF.' });
     }
 
     // Subir el archivo PDF a Supabase Storage
-    const { data, error: uploadError } = await supabase
-      .storage
-      .from('pdf-cristian') // Asegúrate de que este sea el nombre correcto del bucket
-      .upload(`pdfs/${Date.now()}-${pdfFile.originalFilename}`, pdfFile.file, {
-        contentType: pdfFile.mimetype,
-        upsert: true,
-      });
+    const fileName = `pdfs/${Date.now()}-${pdfFile.originalname}`;
+    const { data, error: uploadError } = await supabase.storage
+      .from('pdf-cristian')
+      .upload(fileName, pdfFile.buffer, { contentType: pdfFile.mimetype });
 
     if (uploadError) {
       return res.status(500).json({ error: 'Error al subir el archivo a Supabase Storage', details: uploadError.message });
     }
 
-    // Obtener la URL pública del archivo subido
     const fileUrl = `${process.env.SUPABASE_URL}/storage/v1/object/public/pdf-cristian/${data.path}`;
 
     // Guardar los datos en la base de datos
-    const { data: dbData, error: dbError } = await supabase
-      .from('Automatizacion_cristian') // Nombre de la tabla
-      .insert([
-        {
-          descripcion,
-          sede,
-          fecha_inicial,
-          fecha_final,
-          correo_asignado,
-          pdf_url: fileUrl,
-          estado: 'pendiente', // Estado inicial
-          observacion: '', // Observación inicial vacía
-        },
-      ]);
+    const { error: dbError } = await supabase
+      .from('Automatizacion_cristian')
+      .insert([{ descripcion, sede, fecha_inicial, fecha_final, correo_asignado, pdf_url: fileUrl, estado: 'pendiente', observacion: '' }]);
 
     if (dbError) {
       return res.status(500).json({ error: 'Error al guardar los datos en la base de datos', details: dbError.message });
@@ -62,12 +51,26 @@ export const enviarCorreo = async (req, res) => {
       <p><strong>Puedes descargar el PDF desde este enlace:</strong> <a href="${fileUrl}">Ver PDF</a></p>
     `;
 
-    // Enviar el correo con la URL del archivo
+    // Enviar el correo
     await sendEmail(correo_asignado, 'Detalles del formulario', htmlContent, fileUrl);
 
-    res.status(200).json({ message: 'Correo enviado y datos guardados exitosamente' });
+    res.status(200).json({ message: 'Correo enviado y datos guardados exitosamente.' });
   } catch (error) {
     console.error('Error al enviar el correo:', error);
-    res.status(500).json({ error: `Hubo un error al enviar el correo: ${error.message}` });
+    res.status(500).json({ error: `Hubo un error al procesar la solicitud: ${error.message}` });
   }
 };
+
+// Función handler para manejar la solicitud de API
+export default function handler(req, res) {
+  if (req.method === 'POST') {
+    upload(req, res, (err) => {
+      if (err) {
+        return res.status(400).json({ error: 'Error al subir el archivo.' });
+      }
+      enviarCorreo(req, res);
+    });
+  } else {
+    res.status(405).json({ error: 'Método no permitido.' });
+  }
+}
