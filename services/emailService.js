@@ -1,61 +1,28 @@
-import nodemailer from 'nodemailer';
-import dotenv from 'dotenv';
-import axios from 'axios';
+import express from 'express';
+import cors from 'cors';
+import routes from './routes/formularioRoutes.js';
 
-dotenv.config();  // Cargar las variables de entorno desde el archivo .env
+const app = express();
+const port = process.env.PORT || 7777;
 
-// Crear el transportador de correo
-const transporter = nodemailer.createTransport({
-  service: 'gmail',  // Usamos Gmail como servicio SMTP
-  auth: {
-    user: process.env.EMAIL_USER, // Asegúrate de que esta variable esté en el archivo .env
-    pass: process.env.EMAIL_PASS, // Asegúrate de que esta variable esté en el archivo .env
-  },
+app.use(cors({ origin: '*' }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+app.use('/api', routes);
+
+app.get('/', (req, res) => {
+  res.status(200).json({
+    message: '♥ Corriendo parchaito ♥',
+    timestamp: new Date(),
+  });
 });
 
-// Función para enviar un correo con un archivo adjunto (directamente desde Supabase)
-export const sendEmail = async (to, subject, htmlContent, attachmentUrl = null) => {
-  try {
-    let attachments = [];
+app.use((err, req, res, next) => {
+  console.error('Error inesperado:', err.stack);
+  res.status(500).json({ error: 'Ocurrió un error en el servidor. Intenta nuevamente más tarde.' });
+});
 
-    // Si tenemos una URL de archivo, descargamos el archivo y lo agregamos a los adjuntos
-    if (attachmentUrl) {
-      // Descargar el archivo desde la URL de Supabase
-      const response = await axios({
-        url: attachmentUrl,
-        method: 'GET',
-        responseType: 'arraybuffer',  // Usamos 'arraybuffer' para obtener los datos del archivo como un buffer
-      });
-
-      // Adjuntar el archivo descargado como un buffer
-      attachments.push({
-        filename: 'archivo.pdf',
-        content: response.data,  // El contenido del archivo como buffer
-      });
-
-      // Enviar el correo con el archivo adjunto
-      await transporter.sendMail({
-        from: `"Merkahorro" <${process.env.EMAIL_USER}>`, // Nombre y correo de quien envía
-        to,
-        subject,
-        html: htmlContent, // Si tienes HTML en el correo
-        attachments,
-      });
-
-      console.log(`📨 Correo enviado a ${to}`);
-    } else {
-      // Si no tenemos archivo, solo enviamos el correo sin adjuntos
-      await transporter.sendMail({
-        from: `"Merkahorro" <${process.env.EMAIL_USER}>`,
-        to,
-        subject,
-        html: htmlContent,
-      });
-
-      console.log(`📨 Correo enviado a ${to}`);
-    }
-
-  } catch (error) {
-    console.error('❌ Error al enviar el correo:', error);
-  }
-};
+app.listen(port, () => {
+  console.log(`Servidor corriendo en http://localhost:${port}`);
+});

@@ -1,15 +1,14 @@
 import supabase from '../services/supabaseService.js';
 import multer from 'multer';
-import { sendEmail } from '../services/emailService.js';  // Asegúrate de que la ruta sea correcta
+import { sendEmail } from '../services/emailService.js'; // Asegúrate de que la ruta sea correcta
 
 // Configuración de Multer para procesar la carga de archivos en memoria
 const storage = multer.memoryStorage();
-const upload = multer({ storage }).single('pdf');  // Usamos .single('pdf') para un solo archivo PDF
+const upload = multer({ storage }).single('pdf'); // Usamos .single('pdf') para un solo archivo PDF
 
 // Función para manejar el envío del correo y el almacenamiento en Supabase
 export const enviarCorreo = async (req, res) => {
   try {
-    // Obtener los datos del formulario
     const { descripcion, sede, fecha_inicial, fecha_final, correo_asignado } = req.body;
     const pdfFile = req.file;
 
@@ -26,10 +25,10 @@ export const enviarCorreo = async (req, res) => {
     // Subir el archivo PDF a Supabase Storage
     const { data, error: uploadError } = await supabase
       .storage
-      .from('pdf-cristian')  // Asegúrate de que este sea el nombre correcto del bucket
+      .from('pdf-cristian') // Asegúrate de que este sea el nombre correcto del bucket
       .upload(`pdfs/${Date.now()}-${pdfFile.originalname}`, pdfFile.buffer, {
         contentType: pdfFile.mimetype,
-        upsert: true,  // Esto reemplaza el archivo si ya existe
+        upsert: true,
       });
 
     if (uploadError) {
@@ -39,9 +38,9 @@ export const enviarCorreo = async (req, res) => {
     // Obtener la URL pública del archivo subido
     const fileUrl = `${process.env.SUPABASE_URL}/storage/v1/object/public/pdf-cristian/${data.path}`;
 
-    // Aquí puedes guardar los datos en la base de datos de Supabase
+    // Guardar los datos en la base de datos
     const { data: dbData, error: dbError } = await supabase
-      .from('Automatizacion_cristian') // Nombre de la tabla donde deseas guardar los datos
+      .from('Automatizacion_cristian') // Nombre de la tabla
       .insert([
         {
           descripcion,
@@ -49,8 +48,10 @@ export const enviarCorreo = async (req, res) => {
           fecha_inicial,
           fecha_final,
           correo_asignado,
-          pdf_url: fileUrl,  // Guardamos la URL del archivo PDF en la base de datos
-        }
+          pdf_url: fileUrl,
+          estado: 'pendiente', // Estado inicial
+          observacion: '', // Observación inicial vacía
+        },
       ]);
 
     if (dbError) {
@@ -69,23 +70,20 @@ export const enviarCorreo = async (req, res) => {
     // Enviar el correo con la URL del archivo
     await sendEmail(correo_asignado, 'Detalles del formulario', htmlContent, fileUrl);
 
-    // Responder al cliente indicando que todo ha ido bien
     res.status(200).json({ message: 'Correo enviado y datos guardados exitosamente' });
-
   } catch (error) {
     console.error('Error al enviar el correo:', error);
     res.status(500).json({ error: `Hubo un error al enviar el correo: ${error.message}` });
   }
 };
 
-// Exportar el handler para la ruta API
 export default function handler(req, res) {
   if (req.method === 'POST') {
     upload(req, res, (err) => {
       if (err) {
         return res.status(400).json({ error: 'Error al subir el archivo' });
       }
-      enviarCorreo(req, res);  // Llamamos la función que maneja el correo y el almacenamiento en Supabase
+      enviarCorreo(req, res);
     });
   } else {
     res.status(405).json({ error: 'Método no permitido' });
