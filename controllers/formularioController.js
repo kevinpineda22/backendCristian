@@ -36,7 +36,7 @@ export const enviarCorreo = async (req, res) => {
     // Guardar los datos en la base de datos
     const { error: dbError } = await supabase
       .from('Automatizacion_cristian')
-      .insert([{ descripcion, sede, fecha_inicial, fecha_final, correo_asignado, pdf_url: fileUrl, estado: 'pendiente', observacion: '' }]);
+      .insert([{ descripcion, sede, fecha_inicial, fecha_final, correo_asignado, pdf: fileUrl, estado: 'pendiente', observacion: '' }]);
 
     if (dbError) {
       return res.status(500).json({ error: 'Error al guardar los datos en la base de datos', details: dbError.message });
