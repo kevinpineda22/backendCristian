@@ -1,7 +1,5 @@
-// /controllers/formularioController.js
-
 import supabase from '../services/supabaseService.js';
-import { sendEmail } from '../services/emailService.js'; // Asegúrate de que la ruta sea correcta
+import { sendEmail } from '../services/emailService.js';
 
 // Función para manejar el envío del correo y el almacenamiento en Supabase
 export const enviarCorreo = async (req, res) => {
@@ -23,7 +21,7 @@ export const enviarCorreo = async (req, res) => {
     const { data, error: uploadError } = await supabase
       .storage
       .from('pdf-cristian') // Asegúrate de que este sea el nombre correcto del bucket
-      .upload(`pdfs/${Date.now()}-${pdfFile.originalname}`, pdfFile.buffer, {
+      .upload(`pdfs/${Date.now()}-${pdfFile.originalFilename}`, pdfFile.file, {
         contentType: pdfFile.mimetype,
         upsert: true,
       });

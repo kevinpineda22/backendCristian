@@ -1,31 +1,32 @@
-// api/formulario/enviar-email.js
-import { enviarCorreo } from '../../controllers/formularioController.js';  // Importa el controlador
-import { upload } from '../../services/multerConfig.js';  // Importa la configuración de Multer
+import formidable from 'formidable';
+import { enviarCorreo } from '../../controllers/formularioController.js';
 
 export const config = {
   api: {
-    bodyParser: false, // Deshabilitamos el body parser, ya que Multer maneja la carga de archivos
+    bodyParser: false, // Deshabilitar el body parser
   },
 };
 
-export default async function handler(req, res) {
-  // Configuración de CORS
-  res.setHeader('Access-Control-Allow-Origin', '*'); // Permite acceso desde cualquier dominio
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS'); // Métodos permitidos
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization'); // Cabeceras permitidas
-
-  // Si el método es OPTIONS, responde con 200 sin procesar la solicitud
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
+export default function handler(req, res) {
   if (req.method === 'POST') {
-    // Multer maneja la carga de archivos
-    upload(req, res, (err) => {
+    // Crear un formulario y parsear los datos
+    const form = new formidable.IncomingForm();
+
+    form.parse(req, async (err, fields, files) => {
       if (err) {
-        return res.status(400).json({ error: 'Error al subir el archivo' });
+        return res.status(400).json({ error: 'Error al procesar el formulario', details: err.message });
       }
-      enviarCorreo(req, res);  // Llamamos al controlador para procesar la solicitud
+
+      // Asignar el archivo y los campos a la solicitud
+      req.body = fields;
+      req.file = files.pdf;
+
+      try {
+        // Llamar al controlador para enviar el correo
+        await enviarCorreo(req, res);
+      } catch (e) {
+        return res.status(500).json({ error: 'Error al procesar el correo', details: e.message });
+      }
     });
   } else {
     res.status(405).json({ error: 'Método no permitido' });
