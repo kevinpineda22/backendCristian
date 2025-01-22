@@ -4,7 +4,6 @@ import { upload } from '../services/multerConfig.js';
 
 const router = express.Router();
 
-// Ruta para enviar correo
 router.post('/enviar-email', upload.single('pdf'), enviarCorreo);
 
 export default router;
