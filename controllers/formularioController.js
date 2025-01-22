@@ -1,6 +1,10 @@
 import supabase from '../services/supabaseService.js';
-import nodemailer from 'nodemailer';
-import { upload } from '../services/multerConfig.js'; // Importar la configuración de multer
+import multer from 'multer';
+import { sendEmail } from '../services/emailService.js';  // Asegúrate de que la ruta sea correcta
+
+// Configuración de Multer para procesar la carga de archivos en memoria
+const storage = multer.memoryStorage();
+const upload = multer({ storage }).single('pdf');  // Usamos .single('pdf') para un solo archivo PDF
 
 // Función para manejar el envío del correo y el almacenamiento en Supabase
 export const enviarCorreo = async (req, res) => {
@@ -35,32 +39,19 @@ export const enviarCorreo = async (req, res) => {
     // Obtener la URL pública del archivo subido
     const fileUrl = `${process.env.SUPABASE_URL}/storage/v1/object/public/${data.path}`;
 
-    // Configuración de Nodemailer para enviar el correo
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',  // O el servicio que prefieras
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-
     // Configuración del correo
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: correo_asignado,
-      subject: 'Detalles del formulario',
-      text: `Descripción: ${descripcion}\nSede: ${sede}\nFecha Inicial: ${fecha_inicial}\nFecha Final: ${fecha_final}\n\nPuedes descargar el PDF desde este enlace: ${fileUrl}`,
-      attachments: [
-        {
-          filename: pdfFile.originalname,
-          path: fileUrl,  // Usamos la URL del archivo en Supabase
-        },
-      ],
-    };
+    const htmlContent = `
+      <p><strong>Descripción:</strong> ${descripcion}</p>
+      <p><strong>Sede:</strong> ${sede}</p>
+      <p><strong>Fecha Inicial:</strong> ${fecha_inicial}</p>
+      <p><strong>Fecha Final:</strong> ${fecha_final}</p>
+      <p><strong>Puedes descargar el PDF desde este enlace:</strong> <a href="${fileUrl}">Ver PDF</a></p>
+    `;
 
-    // Enviar el correo
-    await transporter.sendMail(mailOptions);
+    // Enviar el correo con la URL del archivo
+    await sendEmail(correo_asignado, 'Detalles del formulario', htmlContent, fileUrl);
 
+    // Responder al cliente indicando que todo ha ido bien
     res.status(200).json({ message: 'Correo enviado exitosamente' });
   } catch (error) {
     console.error('Error al enviar el correo:', error);
@@ -75,7 +66,7 @@ export default function handler(req, res) {
       if (err) {
         return res.status(400).json({ error: 'Error al subir el archivo' });
       }
-      enviarCorreo(req, res);
+      enviarCorreo(req, res);  // Llamamos la función que maneja el correo
     });
   } else {
     res.status(405).json({ error: 'Método no permitido' });
