@@ -51,6 +51,7 @@ export const enviarCorreo = async (req, res) => {
       <p><strong>Puedes descargar el PDF desde este enlace:</strong> <a href="${fileUrl}">Ver PDF</a></p>
     `;
 
+    // Enviar el correo
     await sendEmail(correo_asignado, 'Detalles del formulario', htmlContent, fileUrl);
 
     res.status(200).json({ message: 'Correo enviado y datos guardados exitosamente.' });
@@ -60,6 +61,7 @@ export const enviarCorreo = async (req, res) => {
   }
 };
 
+// Función handler para manejar la solicitud de API
 export default function handler(req, res) {
   if (req.method === 'POST') {
     upload(req, res, (err) => {

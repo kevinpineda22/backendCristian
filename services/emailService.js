@@ -17,21 +17,25 @@ export const sendEmail = async (to, subject, htmlContent, attachmentUrl = null) 
     const attachments = [];
 
     if (attachmentUrl) {
-      const response = await axios({ url: attachmentUrl, method: 'GET', responseType: 'arraybuffer' });
+      const response = await axios({
+        url: attachmentUrl,
+        method: 'GET',
+        responseType: 'arraybuffer',
+      });
       attachments.push({ filename: 'archivo.pdf', content: response.data });
     }
 
     await transporter.sendMail({
-      from: `"Merkahorro" <${process.env.EMAIL_USER}>`,
+      from: `"Merkahorro" <${process.env.EMAIL_USER}>`,  // Corregido aquí
       to,
       subject,
       html: htmlContent,
       attachments,
     });
 
-    console.log(`📨 Correo enviado a ${to}`);
+    console.log(`📨 Correo enviado a ${to}`);  // Corregido aquí
   } catch (error) {
     console.error('❌ Error al enviar el correo:', error.message);
-    throw new Error(`No se pudo enviar el correo: ${error.message}`);
+    throw new Error(`No se pudo enviar el correo: ${error.message}`);  // Corregido aquí
   }
 };
