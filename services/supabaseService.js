@@ -39,4 +39,20 @@ const getRecordsByEmail = async (email) => {
   return { data, error };
 };
 
-export { uploadFile, getPublicUrl, insertRecord, getRecordsByEmail };
+
+const getAllRecords = async () => {
+    const { data, error } = await supabase
+      .from('Automatizacion_cristian')
+      .select('*');
+    return { data, error };
+  };
+  
+  const updateRecordStatus = async (id, estado) => {
+    const { data, error } = await supabase
+      .from('Automatizacion_cristian')
+      .update({ estado })
+      .eq('id', id);
+    return { data, error };
+  };
+  
+  export { uploadFile, getPublicUrl, insertRecord, getRecordsByEmail, getAllRecords, updateRecordStatus };
