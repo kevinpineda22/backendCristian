@@ -1,69 +1,54 @@
-import nodemailer from 'nodemailer';
-import dotenv from 'dotenv';
+import { insertRecord } from '../services/supabaseService.js';
+import { sendEmail } from '../services/emailService.js';
 
-dotenv.config();
+const registro = async (req, res) => {
+  try {
+    const { descripcion, sede, fecha_inicial, fecha_final, correo_asignado } = req.body;
+    const file = req.file;
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
+    if (!file) {
+      return res.status(400).json({ error: 'Archivo PDF es requerido' });
+    }
+
+    // Insertar el registro en la base de datos
+    const { data, error } = await insertRecord({
+      descripcion,
+      sede,
+      fecha_inicial,
+      fecha_final,
+      correo_asignado,
+      estado: 'Pendiente',
+      observacion: ''
+    });
+
+    if (error) {
+      console.error('Error al insertar el registro:', {
+        message: error.message,
+        code: error.code,
+        details: JSON.stringify(error),
+        hint: error.hint,
+        query: error.query
+      });
+      return res.status(500).json({ error: 'Error al guardar registro', details: error.message });
+    }
+
+    // Enviar el correo electrónico
+    await sendEmail({
+      to: correo_asignado,
+      subject: 'Nuevo Proceso',
+      descripcion,
+      sede,
+      fecha_inicial,
+      fecha_final,
+      correo_asignado,
+      file
+    });
+
+    res.status(200).json({ message: 'Registro exitoso' });
+  } catch (error) {
+    console.error('Error completo:', error);
+    res.status(500).json({ error: 'Error en registro', details: error.message });
   }
-});
-
-const sendEmail = async (correo_asignado, descripcion, sede, fecha_inicial, fecha_final, file) => {
-  await transporter.sendMail({
-    from: process.env.EMAIL_USER,
-    to: correo_asignado,
-    subject: 'Nuevo Automatizacion',
-    html: `
-      <html>
-        <body style="margin: 0; padding: 0; background-color: #f4f4f9;">
-          <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f4f4f9; padding: 20px 0;">
-            <tr>
-              <td align="center">
-                <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; padding: 30px; border: 1px solid #e0e0e0;">
-                  <tr>
-                    <td align="center" style="padding-bottom: 20px;">
-                      <img src="https://www.merkahorro.com/logoMK.png" alt="Logo de la Empresa" width="150" style="display: block;">
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="font-family: Arial, sans-serif; color: #210d65; font-size: 22px; text-align: center; padding-bottom: 10px;">
-                      <strong>Nuevo Proceso</strong>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="font-family: Arial, sans-serif; color: #555555; font-size: 16px; line-height: 1.6; padding-bottom: 20px;">
-                      <p><strong>Descripción:</strong> ${descripcion}</p>
-                       <p><strong>Descripción:</strong> ${sede}</p>
-                      <p><strong>Fecha de inicio:</strong> ${fecha_inicial}</p>
-                      <p><strong>Fecha Final :</strong> $${fecha_final}</p>
-                      
-                      <p>Puedes ver el historial de tus procesos:
-                      <a href="https://backend-cristian.vercel.app/historial/${correo_asignado}" style="color:rgb(34, 131, 211); text-decoration: underline;">aquí</a></p>
-                      </p>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="font-family: Arial, sans-serif; color: #777777; font-size: 14px; text-align: center; padding-top: 20px;">
-                      Saludos cordiales,<br>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td align="center" style="font-family: Arial, sans-serif; color: #999999; font-size: 12px; padding-top: 20px;">
-                      &copy; 2025 Merkahorro | Todos los derechos reservados
-                    </td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-          </table>
-        </body>
-      </html>
-    `, 
-    attachments: [{ filename: file.originalname, content: file.buffer }]
-  });
 };
 
-export { sendEmail };
+export { registro };
