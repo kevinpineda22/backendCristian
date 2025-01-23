@@ -1,4 +1,4 @@
-import { getRecordsByEmail } from '../services/supabaseService.js';
+import { getAllRecords, getRecordsByEmail, updateRecordStatus } from '../services/supabaseService.js';
 
 const historial = async (req, res) => {
   try {
@@ -104,8 +104,6 @@ const historial = async (req, res) => {
   }
 };
 
-
-import { getAllRecords, getRecordsByEmail, updateRecordStatus } from '../services/supabaseService.js';
 
 const getAllHistorial = async (req, res) => {
   try {
