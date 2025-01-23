@@ -19,11 +19,16 @@ const registro = async (req, res) => {
       return res.status(500).json({ error: 'Error al subir archivo', details: uploadError });
     }
 
-    const { data: publicUrlData } = getPublicUrl(fileName);
+    const { publicURL, error: publicUrlError } = getPublicUrl(fileName);
+
+    if (publicUrlError) {
+      console.error('Error Supabase:', publicUrlError);
+      return res.status(500).json({ error: 'Error al obtener URL pública', details: publicUrlError });
+    }
 
     const record = {
       descripcion,
-      pdf: publicUrlData.publicUrl,
+      pdf: publicURL,
       sede,
       fecha_inicial,
       fecha_final,
