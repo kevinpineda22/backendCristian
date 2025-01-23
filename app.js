@@ -17,7 +17,7 @@ app.use('/', historialRoutes);
 
 // Endpoint para verificar que el servidor está corriendo
 app.get('/', (req, res) => {
-  res.send('☻activo mi papacho☻');
+  res.send('♥activo mi papacho♥');
 });
 
 const PORT = process.env.PORT || 5000;
