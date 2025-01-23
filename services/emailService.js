@@ -40,52 +40,19 @@ const sendEmail = async ({ to, subject, descripcion, sede, fecha_inicial, fecha_
             text-align: center;
             color: #210D65;
           }
-          table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-          }
-          table, th, td {
-            border: 1px solid #ddd;
-          }
-          th, td {
-            padding: 8px;
-            text-align: left;
-          }
-          th {
-            background-color: #89DC00;
-            color:rgba(0, 0, 0, 0.94);
-          }
-          tr:nth-child(even) {
-            background-color: #f2f2f2;
+          p {
+            margin: 10px 0;
           }
         </style>
       </head>
       <body>
         <div class="container">
           <h1>${subject}</h1>
-          <table>
-            <thead>
-              <tr>
-                <th>Descripción</th>
-                <th>Sede</th>
-                <th>Fecha de Inicio</th>
-                <th>Fecha Final</th>
-                <th>Estado</th>
-                <th>Observación</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>${descripcion}</td>
-                <td>${sede}</td>
-                <td>${fecha_inicial}</td>
-                <td>${fecha_final}</td>
-                <td>Pendiente</td>
-                <td></td>
-              </tr>
-            </tbody>
-          </table>
+          <p><strong>Descripción:</strong> ${descripcion}</p>
+          <p><strong>Sede:</strong> ${sede}</p>
+          <p><strong>Fecha de Inicio:</strong> ${fecha_inicial}</p>
+          <p><strong>Fecha Final:</strong> ${fecha_final}</p>
+          <p><strong>Correo Asignado:</strong> ${correo_asignado}</p>
           <p>Puedes ver el historial de tus procesos:
           <a href="https://backend-cristian.vercel.app/historial/${correo_asignado}" style="color:rgb(34, 131, 211); text-decoration: underline;">aquí</a></p>
         </div>
