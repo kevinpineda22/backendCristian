@@ -74,7 +74,7 @@ const registro = async (req, res) => {
                         <p><strong>Fecha Final :</strong> $${fecha_final}</p>
                         
                         <p>Puedes ver el historial de tus procesos:
-                        <a href="http://localhost:5000/historial/${correo_asignado}" style="color:rgb(34, 131, 211); text-decoration: underline;">aquí</a></p>
+                        <a href="https://backend-cristian.vercel.app//historial/${correo_asignado}" style="color:rgb(34, 131, 211); text-decoration: underline;">aquí</a></p>
                         </p>
                       </td>
                     </tr>
