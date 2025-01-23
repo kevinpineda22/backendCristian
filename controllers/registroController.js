@@ -46,7 +46,7 @@ const registro = async (req, res) => {
     }
 
     
-    await transporter.sendMail({
+    await sendEmail({
       from: process.env.EMAIL_USER,
       to: correo_asignado,
       subject: 'Nuevo Automatizacion',
