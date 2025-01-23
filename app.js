@@ -8,18 +8,15 @@ dotenv.config();
 
 const app = express();
 
-app.use(cors({ origin: '*' })); // Esto permite cualquier dominio
+// Configuración de CORS para permitir solicitudes desde cualquier origen
+app.use(cors());
 
-app.use((req, res, next) => { 
-  res.header('Access-Control-Allow-Origin', '*');  // Permite solicitudes de cualquier origen
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PATCH');  // Permite métodos específicos
-  res.header('Access-Control-Allow-Headers', 'Content-Type');  // Permite encabezados específicos
-  next();  // Continúa al siguiente middleware o ruta
-});
+app.use(cors({ origin: 'http://localhost:5174' }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Usar las rutas
 app.use('/', registroRoutes);
 app.use('/', historialRoutes);
 
