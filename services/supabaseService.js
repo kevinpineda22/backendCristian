@@ -8,7 +8,7 @@ const supabase = createClient(
   process.env.SUPABASE_KEY
 );
 
-const uploadFile = async (filePath, fileBuffer, fileName) => {
+const uploadFile = async (fileName, fileBuffer) => {
   const { data, error } = await supabase.storage
     .from('pdf-cristian')
     .upload(`pdfs/${fileName}`, fileBuffer, {

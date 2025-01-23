@@ -9,7 +9,7 @@ dotenv.config();
 const app = express();
 
 // Configuración de CORS para permitir solicitudes desde cualquier origen
-
+app.use(cors());
 
 app.use(cors({ origin: 'http://localhost:5174' }));
 

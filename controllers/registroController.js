@@ -1,4 +1,3 @@
-import fs from 'fs';
 import { uploadFile, getPublicUrl, insertRecord } from '../services/supabaseService.js';
 import { sendEmail } from '../services/emailService.js';
 
@@ -10,10 +9,10 @@ const registro = async (req, res) => {
       return res.status(400).json({ error: 'Todos los campos son requeridos' });
     }
 
-    const pdfBuffer = fs.readFileSync(req.file.path);
+    const pdfBuffer = req.file.buffer;
     const fileName = `${Date.now()}_${req.file.originalname}`;
 
-    const { data: uploadData, error: uploadError } = await uploadFile(req.file.path, pdfBuffer, fileName);
+    const { data: uploadData, error: uploadError } = await uploadFile(fileName, pdfBuffer);
 
     if (uploadError) {
       console.error('Error Supabase:', uploadError);
@@ -48,7 +47,6 @@ const registro = async (req, res) => {
 
     await sendEmail(correo_asignado, descripcion, sede, fecha_inicial, fecha_final, req.file);
 
-    fs.unlinkSync(req.file.path);
     res.status(200).json({ message: 'Registro exitoso' });
   } catch (error) {
     console.error('Error completo:', error);

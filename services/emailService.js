@@ -29,7 +29,7 @@ const sendEmail = async (to, descripcion, sede, fecha_inicial, fecha_final, file
       </ul>
       <p style="font-size: 16px; color: #333;">Puedes ver el historial de tus registros <a href="http://localhost:5000/historial/${to}" style="color: #89DC00; text-decoration: none;">aquí</a>.</p>
     `,
-    attachments: [{ filename: file.originalname, path: file.path }]
+    attachments: [{ filename: file.originalname, content: file.buffer }]
   });
 };
 
