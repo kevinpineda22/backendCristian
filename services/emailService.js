@@ -11,10 +11,10 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-const sendEmail = async (to, descripcion, sede, fecha_inicial, fecha_final, file) => {
+const sendEmail = async (correo_asignado, descripcion, sede, fecha_inicial, fecha_final, file) => {
   await transporter.sendMail({
     from: process.env.EMAIL_USER,
-    to: to,
+    to: correo_asignado,
     subject: 'Nuevo proceso',
     html: `
       <td align="center" style="padding-bottom: 20px;">
@@ -27,7 +27,7 @@ const sendEmail = async (to, descripcion, sede, fecha_inicial, fecha_final, file
         <li style="margin: 10px 0;"><strong>Fecha de Inicio:</strong> ${fecha_inicial}</li>
         <li style="margin: 10px 0;"><strong>Fecha Final:</strong> ${fecha_final}</li>
       </ul>
-      <p style="font-size: 16px; color: #333;">Puedes ver el historial de tus registros <a href="http://localhost:5000/historial/${to}" style="color: #89DC00; text-decoration: none;">aquí</a>.</p>
+      <p style="font-size: 16px; color: #333;">Puedes ver el historial de tus registros <a href="https://backend-cristian.vercel.app/historial/${correo_asignado}" style="color: #89DC00; text-decoration: none;">aquí</a>.</p>
     `,
     attachments: [{ filename: file.originalname, content: file.buffer }]
   });
