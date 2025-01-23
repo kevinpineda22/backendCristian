@@ -36,6 +36,7 @@ const sendEmail = async (correo_asignado, descripcion, sede, fecha_inicial, fech
                   <tr>
                     <td style="font-family: Arial, sans-serif; color: #555555; font-size: 16px; line-height: 1.6; padding-bottom: 20px;">
                       <p><strong>Descripción:</strong> ${descripcion}</p>
+                       <p><strong>Descripción:</strong> ${sede}</p>
                       <p><strong>Fecha de inicio:</strong> ${fecha_inicial}</p>
                       <p><strong>Fecha Final :</strong> $${fecha_final}</p>
                       
@@ -61,7 +62,7 @@ const sendEmail = async (correo_asignado, descripcion, sede, fecha_inicial, fech
         </body>
       </html>
     `, 
-    attachments: [{ filename: req.file.originalname, path: req.file.path }]
+    attachments: [{ filename: file.originalname, content: file.buffer }]
   });
 };
 
