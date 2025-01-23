@@ -6,6 +6,10 @@ const registro = async (req, res) => {
     const { descripcion, sede, fecha_inicial, fecha_final, correo_asignado } = req.body;
     const file = req.file;
 
+    if (!file) {
+      return res.status(400).json({ error: 'Archivo PDF es requerido' });
+    }
+
     // Insertar el registro en la base de datos
     const { data, error } = await insertRecord({
       descripcion,
