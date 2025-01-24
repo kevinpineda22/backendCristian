@@ -35,7 +35,7 @@ const sendEmail = async ({ to, subject, descripcion, sede, fecha_inicial, fecha_
                         <p><strong>Descripción:</strong> ${descripcion}</p>
                         <p><strong>Sede:</strong> ${sede}</p>
                         <p><strong>Fecha de inicio:</strong> ${fecha_inicial}</p>
-                        <p><strong>Fecha Final :</strong> ${fecha_final}</p>
+                        <p><strong>Fecha Final :</strong> $${fecha_final}</p>
                         
                         <p>Puedes ver el historial de tus procesos:
                         <a href="https://backend-cristian.vercel.app/historial/${correo_asignado}" style="color:rgb(34, 131, 211); text-decoration: underline;">aquí</a></p>
@@ -59,13 +59,7 @@ const sendEmail = async ({ to, subject, descripcion, sede, fecha_inicial, fecha_
           </body>
         </html>
     `,
-    attachments: [
-      {
-        filename: file.originalname,
-        content: file.buffer,
-        contentType: 'application/pdf',
-      },
-    ],
+    attachments: [{ filename: file.originalname, content: file.buffer }]
   });
 };
 
