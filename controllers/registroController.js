@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { insertRecord } from '../services/supabaseService.js';
+import { sendEmail } from '../services/emailService.js';
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
