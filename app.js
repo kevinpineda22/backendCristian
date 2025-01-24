@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import registroRoutes from './routes/registroRoutes.js';
 import historialRoutes from './routes/historialRoutes.js';
+import './cronJob.js'; // Importar el cron job para que se inicie
 
 dotenv.config();
 
