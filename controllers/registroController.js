@@ -1,5 +1,9 @@
-import { insertRecord, uploadFile, getPublicUrl } from '../services/supabaseService.js';
-import { sendEmail } from '../services/emailService.js';
+import { createClient } from '@supabase/supabase-js';
+import { insertRecord } from '../services/supabaseService.js';
+
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 const registro = async (req, res) => {
   try {
@@ -11,18 +15,19 @@ const registro = async (req, res) => {
     }
 
     // Subir el archivo a Supabase Storage
-    const { data: uploadData, error: uploadError } = await uploadFile(file);
+    const safeFileName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const filePath = `pdfs/${Date.now()}-${safeFileName}`;
+
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('pdf-cristian')
+      .upload(filePath, file.buffer, { contentType: file.mimetype });
+
     if (uploadError) {
-      console.error('Error al subir el archivo:', uploadError);
+      console.error('Error al subir el archivo:', uploadError.message);
       return res.status(500).json({ error: 'Error al subir el archivo', details: uploadError.message });
     }
 
-    // Obtener la URL pública del archivo
-    const { publicURL, error: urlError } = getPublicUrl(uploadData.path);
-    if (urlError) {
-      console.error('Error al obtener la URL pública del archivo:', urlError);
-      return res.status(500).json({ error: 'Error al obtener la URL pública del archivo', details: urlError.message });
-    }
+    const publicURL = `${process.env.SUPABASE_URL}/storage/v1/object/public/${uploadData.path}`;
 
     // Insertar el registro en la base de datos con la URL del archivo
     const { data, error } = await insertRecord({
@@ -31,38 +36,18 @@ const registro = async (req, res) => {
       fecha_inicial,
       fecha_final,
       correo_asignado,
-      estado: 'Pendiente',
-      observacion: '',
-      pdf: publicURL // Guardar la URL del archivo
+      pdf: publicURL
     });
 
     if (error) {
-      console.error('Error al insertar el registro:', {
-        message: error.message,
-        code: error.code,
-        details: JSON.stringify(error),
-        hint: error.hint,
-        query: error.query
-      });
-      return res.status(500).json({ error: 'Error al guardar registro', details: error.message });
+      console.error('Error al insertar el registro:', error.message);
+      return res.status(500).json({ error: 'Error al insertar el registro', details: error.message });
     }
 
-    // Enviar el correo electrónico
-    await sendEmail({
-      to: correo_asignado,
-      subject: 'Nuevo Proceso',
-      descripcion,
-      sede,
-      fecha_inicial,
-      fecha_final,
-      correo_asignado,
-      file
-    });
-
-    res.status(200).json({ message: 'Registro exitoso' });
+    res.status(200).json({ message: 'Registro creado exitosamente', data });
   } catch (error) {
-    console.error('Error completo:', error);
-    res.status(500).json({ error: 'Error en registro', details: error.message });
+    console.error('Error inesperado:', error.message);
+    res.status(500).json({ error: 'Error inesperado', details: error.message });
   }
 };
 
