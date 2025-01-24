@@ -38,4 +38,22 @@ const updateRecordStatusAndObservation = async (id, estado, observacion) => {
   return { data, error };
 };
 
-export { insertRecord, getRecordsByEmail, getAllRecords, updateRecordStatusAndObservation };
+const getRecordsToUpdate = async () => {
+  const { data, error } = await supabase
+    .from('Automatizacion_cristian')
+    .select('*')
+    .eq('estado', 'Pendiente');
+
+  return { data, error };
+};
+
+const updateRecordStatus = async (id, estado) => {
+  const { data, error } = await supabase
+    .from('Automatizacion_cristian')
+    .update({ estado })
+    .eq('id', id);
+
+  return { data, error };
+};
+
+export { insertRecord, getRecordsByEmail, getAllRecords, updateRecordStatusAndObservation, getRecordsToUpdate, updateRecordStatus };
