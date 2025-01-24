@@ -5,12 +5,15 @@ const supabaseKey = process.env.SUPABASE_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const uploadFile = async (file) => {
-  const { data, error } = await supabase.storage.from('your-bucket').upload(`public/${file.name}`, file);
+  const { data, error } = await supabase.storage.from('pdf-cristian').upload(`public/${file.originalname}`, file.buffer, {
+    cacheControl: '3600',
+    upsert: false
+  });
   return { data, error };
 };
 
 const getPublicUrl = (path) => {
-  const { publicURL, error } = supabase.storage.from('your-bucket').getPublicUrl(path);
+  const { publicURL, error } = supabase.storage.from('pdf-cristian').getPublicUrl(path);
   return { publicURL, error };
 };
 
