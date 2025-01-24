@@ -34,16 +34,11 @@ const updateRecordStatusAndObservation = async (id, estado, observacion) => {
   return { data, error };
 };
 
-// Nueva función para obtener registros que necesitan ser actualizados
 const getRecordsToUpdate = async () => {
-  const { data, error } = await supabase.from('Automatizacion_cristian')
-    .select('*')
-    .lt('fecha_final', new Date().toISOString())
-    .eq('estado', 'Pendiente');
+  const { data, error } = await supabase.from('Automatizacion_cristian').select('*').eq('estado', 'Pendiente');
   return { data, error };
 };
 
-// Nueva función para actualizar el estado de los registros
 const updateRecordStatus = async (id, estado) => {
   const { data, error } = await supabase.from('Automatizacion_cristian').update({ estado }).eq('id', id);
   return { data, error };
