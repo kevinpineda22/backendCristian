@@ -12,4 +12,30 @@ const insertRecord = async (record) => {
   return { data, error };
 };
 
-export { insertRecord };
+const getRecordsByEmail = async (email) => {
+  const { data, error } = await supabase
+    .from('Automatizacion_cristian')
+    .select('*')
+    .eq('correo_asignado', email);
+
+  return { data, error };
+};
+
+const getAllRecords = async () => {
+  const { data, error } = await supabase
+    .from('Automatizacion_cristian')
+    .select('*');
+
+  return { data, error };
+};
+
+const updateRecordStatusAndObservation = async (id, estado, observacion) => {
+  const { data, error } = await supabase
+    .from('Automatizacion_cristian')
+    .update({ estado, observacion })
+    .eq('id', id);
+
+  return { data, error };
+};
+
+export { insertRecord, getRecordsByEmail, getAllRecords, updateRecordStatusAndObservation };

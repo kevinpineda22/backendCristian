@@ -36,7 +36,7 @@ const registro = async (req, res) => {
       fecha_inicial,
       fecha_final,
       correo_asignado,
-      pdf: publicURL
+      pdf: publicURL // Usar el nombre de columna correcto "pdf"
     });
 
     if (error) {
