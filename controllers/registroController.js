@@ -33,7 +33,7 @@ const registro = async (req, res) => {
       correo_asignado,
       estado: 'Pendiente',
       observacion: '',
-      archivo_url: publicURL // Guardar la URL del archivo
+      pdf: publicURL // Guardar la URL del archivo
     });
 
     if (error) {
