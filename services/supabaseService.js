@@ -67,4 +67,4 @@ const updateRecordStatus = async (id, estado) => {
   return { data, error };
 };
 
-export { ploadFile, getPublicUrl, insertRecord, getRecordsByEmail, getAllRecords, updateRecordStatusAndObservation, getRecordsToUpdate, updateRecordStatus };
+export { uploadFile, getPublicUrl, insertRecord, getRecordsByEmail, getAllRecords, updateRecordStatusAndObservation, getRecordsToUpdate, updateRecordStatus };
