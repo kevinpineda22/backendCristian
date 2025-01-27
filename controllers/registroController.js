@@ -1,4 +1,4 @@
-import { insertRecord } from '../services/supabaseService.js';
+import { insertRecord, getRecordsToUpdate, updateRecordStatus } from '../services/supabaseService.js'; 
 import { sendEmail } from '../services/emailService.js';
 
 const registro = async (req, res) => {
@@ -45,9 +45,40 @@ const registro = async (req, res) => {
     });
 
     res.status(200).json({ message: 'Registro exitoso' });
+
+    // Llamada a la función que revisa los registros vencidos
+    await revisarRegistrosVencidos();  // Este es el paso que agrega la actualización de los registros vencidos
+
   } catch (error) {
     console.error('Error completo:', error);
     res.status(500).json({ error: 'Error en registro', details: error.message });
+  }
+};
+
+// Función para revisar los registros vencidos y actualizar su estado
+const revisarRegistrosVencidos = async () => {
+  try {
+    // Obtener los registros que necesitan actualización (registros pendientes que ya han pasado su fecha final)
+    const { data, error } = await getRecordsToUpdate();
+
+    if (error) {
+      console.error('Error al obtener registros vencidos:', error);
+      return;
+    }
+
+    // Actualizar el estado de los formularios vencidos
+    for (const registro of data) {
+      const { id } = registro;
+      const { error: updateError } = await updateRecordStatus(id, 'No completado');
+      
+      if (updateError) {
+        console.error(`Error al actualizar el estado del formulario ${id}:`, updateError);
+      } else {
+        console.log(`Formulario con ID: ${id} actualizado a 'No completado'`);
+      }
+    }
+  } catch (error) {
+    console.error('Error al revisar registros vencidos:', error);
   }
 };
 

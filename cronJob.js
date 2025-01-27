@@ -1,4 +1,4 @@
-import cron from 'node-cron';
+/* import cron from 'node-cron';
 import { getRecordsToUpdate, updateRecordStatus } from './services/supabaseService.js';
 
 const checkAndUpdateRecords = async () => {
@@ -26,4 +26,4 @@ const checkAndUpdateRecords = async () => {
 // Programar el cron job para que se ejecute cada día a medianoche
 cron.schedule('0 0 * * *', checkAndUpdateRecords);
 
-console.log('Cron job programado para verificar y actualizar registros diariamente a medianoche.');
+console.log('Cron job programado para verificar y actualizar registros diariamente a medianoche.'); */
