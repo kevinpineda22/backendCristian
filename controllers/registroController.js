@@ -32,7 +32,7 @@ const registro = async (req, res) => {
       correo_asignado,
       estado: 'Pendiente',  // Estado inicial es "Pendiente"
       observacion: '',
-      pdf_url: publicURL // Guardar la URL pública del PDF
+      pdf: publicURL // Guardar la URL pública del PDF
     });
 
     if (error) {
