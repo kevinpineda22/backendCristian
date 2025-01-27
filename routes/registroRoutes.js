@@ -2,6 +2,7 @@
 import express from 'express';
 import multer from 'multer';  // Necesitamos usar multer para manejar la carga del archivo
 import { registro } from '../controllers/registroController.js';
+import upload from '../middlewares/upload.js';
 
 const router = express.Router();
 
