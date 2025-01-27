@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { v4 as uuidv4 } from 'uuid';
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
@@ -6,7 +7,8 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 
 const uploadFile = async (file) => {
-  const { data, error } = await supabase.storage.from('pdf-cristian').upload(`public/${file.originalname}`, file.buffer);
+  const uniqueFileName = `${uuidv4()}-${file.originalname}`;
+  const { data, error } = await supabase.storage.from('pdf-cristian').upload(`pdfs/${file.originalname}`, file.buffer);
   return { data, error };
 };
 
