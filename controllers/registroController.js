@@ -17,7 +17,7 @@ const registro = async (req, res) => {
       fecha_inicial,
       fecha_final,
       correo_asignado,
-      estado: 'Pendiente',
+      estado: 'Pendiente',  // Estado inicial es "Pendiente"
       observacion: ''
     });
 
@@ -66,15 +66,23 @@ const revisarRegistrosVencidos = async () => {
       return;
     }
 
+    // Obtener la fecha actual para la comparación
+    const fechaActual = new Date();
+
     // Actualizar el estado de los formularios vencidos
     for (const registro of data) {
-      const { id } = registro;
-      const { error: updateError } = await updateRecordStatus(id, 'No Completado');
-      
-      if (updateError) {
-        console.error(`Error al actualizar el estado del formulario ${id}:`, updateError);
-      } else {
-        console.log(`Formulario con ID: ${id} actualizado a 'No completado'`);
+      const { id, fecha_final, estado } = registro;
+      const fechaFinal = new Date(fecha_final); // Asegúrate de que fecha_final se convierte a Date
+
+      // Solo actualizar los registros cuya fecha_final haya pasado y cuyo estado sea "Pendiente"
+      if (fechaFinal < fechaActual && estado === 'Pendiente') {
+        const { error: updateError } = await updateRecordStatus(id, 'No Completado');
+        
+        if (updateError) {
+          console.error(`Error al actualizar el estado del formulario ${id}:`, updateError);
+        } else {
+          console.log(`Formulario con ID: ${id} actualizado a 'No completado'`);
+        }
       }
     }
   } catch (error) {
