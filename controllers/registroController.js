@@ -69,7 +69,7 @@ const revisarRegistrosVencidos = async () => {
     // Actualizar el estado de los formularios vencidos
     for (const registro of data) {
       const { id } = registro;
-      const { error: updateError } = await updateRecordStatus(id, 'No completado');
+      const { error: updateError } = await updateRecordStatus(id, 'No Completado');
       
       if (updateError) {
         console.error(`Error al actualizar el estado del formulario ${id}:`, updateError);
