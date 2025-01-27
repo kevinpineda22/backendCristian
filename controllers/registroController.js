@@ -1,4 +1,4 @@
-import { insertRecord, getRecordsToUpdate, updateRecordStatus } from '../services/supabaseService.js'; 
+import { insertRecord, uploadFile, getPublicUrl, getRecordsToUpdate, updateRecordStatus } from '../services/supabaseService.js'; 
 import { sendEmail } from '../services/emailService.js';
 
 const registro = async (req, res) => {
@@ -10,6 +10,19 @@ const registro = async (req, res) => {
       return res.status(400).json({ error: 'Archivo PDF es requerido' });
     }
 
+    // Subir el archivo a Supabase y obtener la URL pública
+    const { data: uploadData, error: uploadError } = await uploadFile(file);
+    if (uploadError) {
+      console.error('Error al subir el archivo:', uploadError);
+      return res.status(500).json({ error: 'Error al subir el archivo', details: uploadError.message });
+    }
+
+    const { publicURL, error: urlError } = getPublicUrl(uploadData.Key);
+    if (urlError) {
+      console.error('Error al obtener la URL pública del archivo:', urlError);
+      return res.status(500).json({ error: 'Error al obtener la URL pública del archivo', details: urlError.message });
+    }
+
     // Insertar el registro en la base de datos
     const { data, error } = await insertRecord({
       descripcion,
@@ -18,7 +31,8 @@ const registro = async (req, res) => {
       fecha_final,
       correo_asignado,
       estado: 'Pendiente',  // Estado inicial es "Pendiente"
-      observacion: ''
+      observacion: '',
+      pdf_url: publicURL // Guardar la URL pública del PDF
     });
 
     if (error) {
