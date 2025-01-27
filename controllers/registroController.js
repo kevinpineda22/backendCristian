@@ -1,10 +1,6 @@
 import { insertRecord, getRecordsToUpdate, updateRecordStatus } from '../services/supabaseService.js'; 
 import { sendEmail } from '../services/emailService.js';
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
-
 const registro = async (req, res) => {
   try {
     const { descripcion, sede, fecha_inicial, fecha_final, correo_asignado } = req.body;
@@ -14,29 +10,15 @@ const registro = async (req, res) => {
       return res.status(400).json({ error: 'Archivo PDF es requerido' });
     }
 
-    // Subir el archivo a Supabase Storage
-    const safeFileName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const filePath = `pdfs/${Date.now()}-${safeFileName}`;
-
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('pdf-cristian')
-      .upload(filePath, file.buffer, { contentType: file.mimetype });
-
-    if (uploadError) {
-      console.error('Error al subir el archivo:', uploadError.message);
-      return res.status(500).json({ error: 'Error al subir el archivo', details: uploadError.message });
-    }
-
-    const publicURL = `${process.env.SUPABASE_URL}/storage/v1/object/public/${uploadData.path}`;
-
-    // Insertar el registro en la base de datos con la URL del archivo
+    // Insertar el registro en la base de datos
     const { data, error } = await insertRecord({
       descripcion,
       sede,
       fecha_inicial,
       fecha_final,
       correo_asignado,
-      pdf: publicURL // Usar el nombre de columna correcto "pdf"
+      estado: 'Pendiente',
+      observacion: ''
     });
 
     if (error) {

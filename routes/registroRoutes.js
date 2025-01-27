@@ -1,13 +1,8 @@
-// routes/registroRoutes.js
 import express from 'express';
-import multer from 'multer';  // Necesitamos usar multer para manejar la carga del archivo
 import { registro } from '../controllers/registroController.js';
-import upload from '../middlewares/upload.js';
+import upload from '../middlewares/upload.js';  // Usamos el middleware 'upload' desde 'middlewares/upload.js'
 
 const router = express.Router();
-
-// Configuración de multer para el manejo del archivo PDF
-const upload = multer();
 
 // Ruta POST para el registro del formulario
 router.post('/registro', upload.single('pdf'), registro);

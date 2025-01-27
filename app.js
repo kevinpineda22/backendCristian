@@ -4,7 +4,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import registroRoutes from './routes/registroRoutes.js';  // Ruta para manejar el registro
 import historialRoutes from './routes/historialRoutes.js';  // Ruta para manejar el historial de registros
-import './cronJob.js';  // Importa el archivo que contiene el cron job para actualizar los registros vencidos
+
 
 dotenv.config();
 
