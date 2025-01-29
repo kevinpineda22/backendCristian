@@ -5,11 +5,32 @@ const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-
 const uploadFile = async (file) => {
-  const uniqueFileName = `${uuidv4()}-${file.originalname}`;
-  const { data, error } = await supabase.storage.from('pdf-cristian').upload(`pdfs/${file.originalname}`, file.buffer);
-  return { data, error };
+  // Generamos un nombre único para el archivo
+  const uniqueFileName = `${uuidv4()}-${file.originalname.replace(/\s+/g, '-')}`;
+
+  // Comprobamos si ya existe un archivo con ese nombre en el almacenamiento
+  const { data: existingFiles, error: listError } = await supabase
+    .storage
+    .from('pdf-cristian')
+    .list('pdfs', { search: uniqueFileName });
+
+  if (existingFiles && existingFiles.length > 0) {
+    console.log('El archivo ya existe, no se sube nuevamente');
+    return { data: null, error: { message: 'El archivo ya existe' } };
+  }
+
+  // Si no existe, subimos el archivo
+  const { data, error } = await supabase.storage.from('pdf-cristian').upload(`pdfs/${uniqueFileName}`, file.buffer);
+
+  // Si ocurre un error al subir, lo manejamos
+  if (error) {
+    console.error('Error al subir el archivo:', error.message);
+    return { data: null, error };
+  }
+
+  console.log('Archivo subido correctamente');
+  return { data, error: null };
 };
 
 const getPublicUrl = (path) => {
