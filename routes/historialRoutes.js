@@ -3,7 +3,7 @@ import { historial, getAllHistorial, updateHistorialStatus } from '../controller
 
 const router = express.Router();
 
-router.get('/historialregistros', historial);
+router.get('/historial/:correo', historial);
 router.get('/historial', getAllHistorial);
 router.put('/historial', updateHistorialStatus);
 
