@@ -34,7 +34,7 @@ const sendEmail = async ({ to, subject, descripcion, sede, fecha_inicial, fecha_
       }
       h2 {
         font-size: 24px;
-        color: #333333;
+        color:rgb(255, 255, 255);
       }
       .button {
         background-color: #210d65;
