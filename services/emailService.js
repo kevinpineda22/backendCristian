@@ -78,8 +78,9 @@ const sendEmail = async ({ to, subject, descripcion, sede, fecha_inicial, fecha_
                   </tr>
                 </table>
                 <p style="margin-top: 20px;">Puedes ver el historial de tus procesos en el siguiente enlace:</p>
-                <a href="http://localhost:5174/historial/${correo_asignado}" target="_blank" style="color: #3498db;">Ver Historial</a>
+                <a href="https://www.merkahorro.com/historial/${correo_asignado}" target="_blank" style="color: #3498db;">Ver Historial</a>
                 <p style="margin-top: 30px;">Saludos cordiales,<br>El equipo de Merkahorro</p>
+
               </td>
             </tr>
           </table>
