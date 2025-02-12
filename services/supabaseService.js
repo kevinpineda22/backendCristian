@@ -34,8 +34,8 @@ const uploadFile = async (file) => {
 };
 
 const getPublicUrl = (path) => {
-  const { publicURL, error } = supabase.storage.from('pdf-cristian').getPublicUrl(path);
-  return { publicURL, error };
+  const { data, error } = supabase.storage.from('pdf-cristian').getPublicUrl(path);
+  return { publicURL: data?.publicUrl, error };
 };
 
 const insertRecord = async (record) => {
