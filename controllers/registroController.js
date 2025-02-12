@@ -17,7 +17,7 @@ const registro = async (req, res) => {
       return res.status(500).json({ error: 'Error al subir el archivo', details: uploadError.message });
     }
 
-    const { publicURL, error: urlError } = getPublicUrl(uploadData.path);
+    const { publicURL, error: urlError } = getPublicUrl(uploadData.Key);
     if (urlError) {
       console.error('Error al obtener la URL pública del archivo:', urlError);
       return res.status(500).json({ error: 'Error al obtener la URL pública del archivo', details: urlError.message });
