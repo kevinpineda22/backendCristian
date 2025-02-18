@@ -20,8 +20,11 @@ const uploadFile = async (file) => {
     return { data: null, error: { message: 'El archivo ya existe' } };
   }
 
-  // Si no existe, subimos el archivo
-  const { data, error } = await supabase.storage.from('pdf-cristian').upload(`pdfs/${uniqueFileName}`, file.buffer);
+  // Si no existe, subimos el archivo con contentType
+  const { data, error } = await supabase
+    .storage
+    .from('pdf-cristian')
+    .upload(`pdfs/${uniqueFileName}`, file.buffer, { contentType: file.mimetype });
 
   // Si ocurre un error al subir, lo manejamos
   if (error) {
@@ -34,8 +37,11 @@ const uploadFile = async (file) => {
 };
 
 const getPublicUrl = (path) => {
-  const { publicURL, error } = supabase.storage.from('pdf-cristian').getPublicUrl(path);
-  return { publicURL, error };
+  const { data, error } = supabase
+    .storage
+    .from('pdf-cristian')
+    .getPublicUrl(path);
+  return { publicURL: data?.publicUrl, error };
 };
 
 const insertRecord = async (record) => {
