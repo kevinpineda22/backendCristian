@@ -96,7 +96,7 @@ const sendEmail = async ({ to, subject, descripcion, sede, fecha_inicial, fecha_
     </table>
   </body>
   </html>
-  `;
+  `; 
 
     // Enviamos el correo con el contenido simplificado
     const info = await transporter.sendMail({
