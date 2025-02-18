@@ -16,7 +16,7 @@ const sendEmail = async ({ to, subject, descripcion, sede, fecha_inicial, fecha_
   try {
     // Simplificamos el HTML para reducir la complejidad
     const htmlContent = `
-       <!DOCTYPE html>
+           <!DOCTYPE html>
   <html>
   <head>
     <meta charset="UTF-8">
@@ -38,7 +38,7 @@ const sendEmail = async ({ to, subject, descripcion, sede, fecha_inicial, fecha_
       }
       h2 {
         font-size: 24px;
-        color:rgb(255, 255, 255);
+        color: rgb(255, 255, 255);
       }
       .button {
         background-color: #210d65;
@@ -84,7 +84,10 @@ const sendEmail = async ({ to, subject, descripcion, sede, fecha_inicial, fecha_
                 <p style="margin-top: 20px;">Puedes ver el historial de tus procesos en el siguiente enlace:</p>
                 <a href="https://www.merkahorro.com/historial/${correo_asignado}" target="_blank" style="color: #3498db;">Ver Historial</a>
                 <p style="margin-top: 30px;">Saludos cordiales,<br>El equipo de Merkahorro</p>
-
+                <p style="margin-top: 20px; font-style: italic; text-align: center; color: #555;">
+                  "Que otra cosa puede hacer el hombre bondadoso, si no es hacer el bien por los demás hombres."<br>
+                  <strong>Marco Aurelio</strong>
+                </p>
               </td>
             </tr>
           </table>
