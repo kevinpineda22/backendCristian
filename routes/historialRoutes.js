@@ -1,5 +1,6 @@
 import express from 'express';
-import { historial, getAllHistorial, updateHistorialStatus,obtenerResumenFruver } from '../controllers/historialController.js';
+import { historial, getAllHistorial, updateHistorialStatus, } from '../controllers/historialController.js';
+import { obtenerResumenFruver } from '../controllers/dashboardController.js';
 
 const router = express.Router();
 
