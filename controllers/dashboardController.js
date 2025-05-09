@@ -1,6 +1,6 @@
 import { supabase } from '../services/supabaseService.js';
 
-const obtenerRegistros = async (req, res) => {
+const obtenerResumenFruver = async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('Automatizacion_cristian')
@@ -14,4 +14,4 @@ const obtenerRegistros = async (req, res) => {
   }
 };
 
-export { obtenerRegistros };
+export { obtenerResumenFruver };
