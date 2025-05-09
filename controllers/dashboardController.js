@@ -1,4 +1,4 @@
-import { supabase } from '../services/supabaseService.js';
+
 
 const obtenerResumenFruver = async (req, res) => {
   try {
