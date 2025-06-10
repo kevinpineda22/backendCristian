@@ -4,6 +4,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import registroRoutes from './routes/registroRoutes.js';  // Ruta para manejar el registro
 import historialRoutes from './routes/historialRoutes.js';  // Ruta para manejar el historial de registros
+import escaneoRoutes from './routes/escaneoRoutes.js'; // 🚀 IMPORTANTE: esta es la ruta que tiene /registrar-escaneo
 import { obtenerResumenFruver } from './controllers/dashboardController.js';
 
 
@@ -20,6 +21,8 @@ app.use(express.urlencoded({ extended: true }));  // Permite manejar datos de fo
 // Usar las rutas definidas
 app.use('/', registroRoutes);  // Ruta para registrar formularios
 app.use('/', historialRoutes);  // Ruta para el historial de formularios
+app.use('/', escaneoRoutes); // 🚀 Aquí montas las rutas del escáner
+
 app.get('/resumen', obtenerResumenFruver);  // Ruta para obtener el resumen de Fruver
 
 // Endpoint para verificar que el servidor está corriendo
