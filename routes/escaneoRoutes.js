@@ -1,9 +1,23 @@
 import express from 'express';
-import { registrarEscaneo } from '../controllers/scannerController.js';
+import {
+  registrarEscaneo,
+  iniciarInventario,
+  obtenerHistorialInventario,
+  eliminarRegistroInventario
+} from '../controllers/scannerController.js';
 
 const router = express.Router();
 
-// 🚀 Nueva ruta para registrar escaneo
+// 🚀 Iniciar un nuevo inventario
+router.post('/iniciar-inventario', iniciarInventario);
+
+// 🚀 Registrar un escaneo (código de barras + cantidad)
 router.post('/registrar-escaneo', registrarEscaneo);
+
+// 📄 Obtener historial de escaneos de un inventario específico
+router.get('/historial/:inventario_id', obtenerHistorialInventario);
+
+// ❌ Eliminar un registro específico del historial
+router.delete('/registro/:id', eliminarRegistroInventario);
 
 export default router;
