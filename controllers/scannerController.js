@@ -74,19 +74,20 @@ export const registrarEscaneo = async (req, res) => {
 
 // 🟢 Iniciar inventario
 export const iniciarInventario = async (req, res) => {
-  const { categoria_id, descripcion, foto_url, usuario } = req.body;
+  const { categoria, descripcion, foto_url, usuario_email } = req.body;
 
-  if (!categoria_id || !descripcion || !foto_url || !usuario) {
+  if (!categoria || !descripcion || !foto_url || !usuario_email) {
     return res.status(400).json({ success: false, message: "Datos incompletos" });
   }
 
   const { data, error } = await supabase
-    .from("inventario")
-    .insert([{ categoria_id, descripcion, foto_url, usuario }])
+    .from("inventarios")
+    .insert([{ categoria, descripcion, foto_url, usuario_email }])
     .select()
     .single();
 
   if (error) {
+    console.error("Error al insertar inventario:", error.message);
     return res.status(500).json({ success: false, message: "Error al iniciar inventario" });
   }
 
@@ -127,39 +128,32 @@ export const eliminarRegistroInventario = async (req, res) => {
 };
 
 // 🔼 Subir foto al bucket 'inventario'
-export const subirFoto = [
-  storage.single("file"),
-  async (req, res) => {
-    try {
-      const file = req.file;
-      const filename = req.body.filename || `foto_${uuidv4()}.jpg`;
+export const subirFoto = async (req, res) => {
+  const archivo = req.file;
+  const nombreArchivo = req.body.filename;
 
-      if (!file) {
-        return res.status(400).json({ success: false, message: "Archivo no recibido" });
-      }
-
-      const { error: uploadError } = await supabase.storage
-        .from("inventario")
-        .upload(filename, file.buffer, {
-          contentType: file.mimetype,
-          upsert: true,
-        });
-
-      if (uploadError) {
-        return res.status(500).json({ success: false, message: "Error subiendo imagen" });
-      }
-
-      const { data: publicUrl } = supabase.storage
-        .from("inventario")
-        .getPublicUrl(filename);
-
-      res.json({ success: true, url: publicUrl.publicUrl });
-    } catch (err) {
-      console.error("Error subiendo imagen:", err);
-      res.status(500).json({ success: false, message: "Error en el servidor" });
-    }
+  if (!archivo || !nombreArchivo) {
+    return res.status(400).json({ success: false, message: "Archivo o nombre faltante" });
   }
-];
+
+  const { error } = await supabase.storage
+    .from("inventario")
+    .upload(nombreArchivo, archivo.buffer, {
+      contentType: archivo.mimetype,
+      upsert: true
+    });
+
+  if (error) {
+    return res.status(500).json({ success: false, message: "Error al subir archivo" });
+  }
+
+  const { data: publicUrl } = supabase
+    .storage
+    .from("inventario")
+    .getPublicUrl(nombreArchivo);
+
+  res.json({ success: true, url: publicUrl.publicUrl });
+};
 
 // 📂 Obtener categorías
 export const obtenerCategorias = async (req, res) => {
