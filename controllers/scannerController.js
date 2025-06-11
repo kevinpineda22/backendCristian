@@ -46,7 +46,7 @@ export const registrarEscaneo = async (req, res) => {
 
   // Insertar en detalle del inventario
   const { error: insertError } = await supabase
-    .from("inventario_detalle")
+    .from("detalles_inventario")
     .insert([{
       inventario_id,
       producto_id: producto.id,
@@ -91,7 +91,7 @@ export const obtenerHistorialInventario = async (req, res) => {
   const { inventario_id } = req.params;
 
   const { data, error } = await supabase
-    .from("inventario_detalle")
+    .from("detalles_inventario")
     .select("id, cantidad, created_at, producto:producto_id(descripcion, codigo_barras)")
     .eq("inventario_id", inventario_id)
     .order("created_at", { ascending: false });
@@ -108,7 +108,7 @@ export const eliminarRegistroInventario = async (req, res) => {
   const { id } = req.params;
 
   const { error } = await supabase
-    .from("inventario_detalle")
+    .from("detalles_inventario")
     .delete()
     .eq("id", id);
 
