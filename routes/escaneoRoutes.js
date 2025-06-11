@@ -2,31 +2,31 @@ import express from 'express';
 import {
   registrarEscaneo,
   iniciarInventario,
+  subirFoto,
   obtenerHistorialInventario,
   eliminarRegistroInventario,
-  obtenerCategorias, 
-  subirFoto,
-  upload,
+  obtenerCategorias,
+  upload // middleware de multer para subir fotos
 } from '../controllers/scannerController.js';
 
 const router = express.Router();
 
-// 🚀 Iniciar un nuevo inventario
-router.post('/iniciar-inventario', iniciarInventario);
-
-// 🚀 Registrar un escaneo (código de barras + cantidad)
+// 🚀 Registrar escaneo de producto
 router.post('/registrar-escaneo', registrarEscaneo);
 
-// 📄 Obtener historial de escaneos de un inventario específico
+// 🟢 Iniciar un nuevo inventario
+router.post('/iniciar-inventario', iniciarInventario);
+
+// 🔼 Subir foto de zona al bucket 'inventario'
+router.post('/subir-foto', upload, subirFoto);
+
+// 📄 Obtener historial de escaneos por inventario
 router.get('/historial/:inventario_id', obtenerHistorialInventario);
 
-// ❌ Eliminar un registro específico del historial
-router.delete('/registro/:id', eliminarRegistroInventario);
+// ❌ Eliminar registro específico del inventario
+router.delete('/eliminar/:id', eliminarRegistroInventario);
 
-// 🆕 Ruta para listar categorías
-router.get('/categorias', obtenerCategorias); 
-
-router.post('/subir-foto', upload.single("file"), subirFoto);
-
+// 📂 Obtener lista de categorías
+router.get('/categorias', obtenerCategorias);
 
 export default router;
