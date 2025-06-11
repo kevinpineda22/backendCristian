@@ -4,7 +4,9 @@ import {
   iniciarInventario,
   obtenerHistorialInventario,
   eliminarRegistroInventario,
-  obtenerCategorias
+  obtenerCategorias, 
+  subirFoto,
+  upload,
 } from '../controllers/scannerController.js';
 
 const router = express.Router();
@@ -23,6 +25,8 @@ router.delete('/registro/:id', eliminarRegistroInventario);
 
 // 🆕 Ruta para listar categorías
 router.get('/categorias', obtenerCategorias); 
+
+router.post('/subir-foto', upload.single("file"), subirFoto);
 
 
 export default router;

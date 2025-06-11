@@ -1,6 +1,13 @@
 import { createClient } from "@supabase/supabase-js";
+import multer from "multer";
+import dotenv from "dotenv";
+dotenv.config();
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+
+// Configuración de multer para subir imágenes
+const storage = multer.memoryStorage();
+export const upload = multer({ storage });
 
 // 🚀 Registrar escaneo
 export const registrarEscaneo = async (req, res) => {
@@ -51,7 +58,7 @@ export const registrarEscaneo = async (req, res) => {
       inventario_id,
       producto_id: producto.id,
       cantidad: cantidadSumar,
-      usuario: usuario || null // solo si decides llevar este campo
+      usuario: usuario || null
     }]);
 
   if (updateError || insertError) {
@@ -119,6 +126,35 @@ export const eliminarRegistroInventario = async (req, res) => {
   res.json({ success: true, message: "Registro eliminado correctamente" });
 };
 
+// 🔼 Subir foto al bucket 'inventario'
+export const subirFoto = async (req, res) => {
+  const archivo = req.file;
+  const nombreArchivo = req.body.filename;
+
+  if (!archivo || !nombreArchivo) {
+    return res.status(400).json({ success: false, message: "Archivo o nombre faltante" });
+  }
+
+  const { error } = await supabase.storage
+    .from("inventario")
+    .upload(nombreArchivo, archivo.buffer, {
+      contentType: archivo.mimetype,
+      upsert: true
+    });
+
+  if (error) {
+    return res.status(500).json({ success: false, message: "Error al subir archivo" });
+  }
+
+  const { data: publicUrl } = supabase
+    .storage
+    .from("inventario")
+    .getPublicUrl(nombreArchivo);
+
+  res.json({ success: true, url: publicUrl.publicUrl });
+};
+
+// 📂 Obtener categorías
 export const obtenerCategorias = async (req, res) => {
   const { data, error } = await supabase
     .from("categorias")
@@ -129,5 +165,5 @@ export const obtenerCategorias = async (req, res) => {
     return res.status(500).json({ success: false, message: "Error al obtener categorías" });
   }
 
-  res.json(data); // Envío directo del array
+  res.json(data);
 };
