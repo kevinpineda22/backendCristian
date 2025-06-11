@@ -3,15 +3,10 @@ import { createClient } from "@supabase/supabase-js";
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 
 export const registrarEscaneo = async (req, res) => {
-  const { codigo, cantidad } = req.body;
+  const { codigo } = req.body;
 
   if (!codigo) {
     return res.status(400).json({ success: false, message: "Código de barras requerido" });
-  }
-
-  const cantidadSumar = parseInt(cantidad);
-  if (isNaN(cantidadSumar) || cantidadSumar <= 0) {
-    return res.status(400).json({ success: false, message: "Cantidad inválida" });
   }
 
   // Buscar el producto
@@ -25,12 +20,10 @@ export const registrarEscaneo = async (req, res) => {
     return res.status(404).json({ success: false, message: "Producto no encontrado" });
   }
 
-  // Actualizar el conteo sumando la cantidad solicitada
-  const nuevaCantidad = producto.cantidad + cantidadSumar;
-
+  // Actualizar el conteo
   const { data: actualizado, error: updateError } = await supabase
     .from("productos")
-    .update({ cantidad: nuevaCantidad })
+    .update({ cantidad: producto.cantidad + 1 })
     .eq("codigo_barras", codigo)
     .select()
     .single();
