@@ -12,6 +12,8 @@ export const upload = multer({ storage }).single("file");
 
 // 🚀 Registrar escaneo
 export const registrarEscaneo = async (req, res) => {
+  console.log("🔍 Datos recibidos en registrarEscaneo:", req.body); // 👈 Esto imprime todo el body
+
   const { codigo, cantidad, inventario_id, usuario } = req.body;
 
   if (!codigo || !cantidad || !inventario_id) {
@@ -23,7 +25,7 @@ export const registrarEscaneo = async (req, res) => {
     return res.status(400).json({ success: false, message: "Cantidad inválida" });
   }
 
-  // Verificar inventario existente
+  // Verificar que exista el inventario
   const { data: inventario, error: inventarioError } = await supabase
     .from("inventarios")
     .select("id")
@@ -34,7 +36,7 @@ export const registrarEscaneo = async (req, res) => {
     return res.status(404).json({ success: false, message: "Inventario no encontrado" });
   }
 
-  // Buscar producto
+  // Buscar el producto
   const { data: producto, error: productoError } = await supabase
     .from("productos")
     .select("*")
@@ -45,14 +47,14 @@ export const registrarEscaneo = async (req, res) => {
     return res.status(404).json({ success: false, message: "Producto no encontrado" });
   }
 
-  // Actualizar cantidad total en productos
+  // Actualizar cantidad
   const nuevaCantidad = producto.cantidad + cantidadSumar;
   const { error: updateError } = await supabase
     .from("productos")
     .update({ cantidad: nuevaCantidad })
     .eq("id", producto.id);
 
-  // Insertar detalle de escaneo
+  // Insertar en detalles_inventario
   const { error: insertError } = await supabase
     .from("detalles_inventario")
     .insert([{
@@ -63,6 +65,7 @@ export const registrarEscaneo = async (req, res) => {
     }]);
 
   if (updateError || insertError) {
+    console.error("❌ Error al actualizar o insertar:", updateError || insertError);
     return res.status(500).json({ success: false, message: "Error al registrar escaneo" });
   }
 
