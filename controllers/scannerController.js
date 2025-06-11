@@ -3,20 +3,27 @@ import multer from "multer";
 import dotenv from "dotenv";
 dotenv.config();
 
-// Inicializar Supabase
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 
 // Configuración de multer para subir imágenes
 const storage = multer.memoryStorage();
-export const upload = multer({ storage }).single("file");
+export const upload = multer({
+  storage,
+  fileFilter: (req, file, cb) => {
+    if (!file.mimetype.startsWith("image/")) {
+      return cb(new Error("Solo se permiten imágenes"));
+    }
+    cb(null, true);
+  },
+}).single("file");
 
 // 🚀 Registrar escaneo
 export const registrarEscaneo = async (req, res) => {
-  console.log("🔍 Datos recibidos en registrarEscaneo:", req.body); // 👈 Esto imprime todo el body
+  console.log("🔍 Datos recibidos en registrarEscaneo:", req.body);
 
-  const { codigo, cantidad, inventario_id, usuario } = req.body;
+  const { codigo, cantidad, inventario_id, usuario_email } = req.body;
 
-  if (!codigo || !cantidad || !inventario_id) {
+  if (!codigo || !cantidad || !inventario_id || !usuario_email) {
     return res.status(400).json({ success: false, message: "Datos incompletos" });
   }
 
@@ -25,77 +32,113 @@ export const registrarEscaneo = async (req, res) => {
     return res.status(400).json({ success: false, message: "Cantidad inválida" });
   }
 
-  // Verificar que exista el inventario
-  const { data: inventario, error: inventarioError } = await supabase
-    .from("inventarios")
-    .select("id")
-    .eq("id", inventario_id)
-    .maybeSingle();
+  try {
+    // Verificar que exista el inventario
+    const { data: inventario, error: inventarioError } = await supabase
+      .from("inventarios")
+      .select("id, categoria_id, estado")
+      .eq("id", inventario_id)
+      .single();
 
-  if (inventarioError || !inventario) {
-    return res.status(404).json({ success: false, message: "Inventario no encontrado" });
+    if (inventarioError || !inventario) {
+      return res.status(404).json({ success: false, message: "Inventario no encontrado" });
+    }
+
+    if (inventario.estado === "finalizado") {
+      return res.status(400).json({ success: false, message: "El inventario ya está finalizado" });
+    }
+
+    // Buscar el producto y verificar categoría
+    const { data: producto, error: productoError } = await supabase
+      .from("productos")
+      .select("*")
+      .eq("codigo_barras", codigo)
+      .single();
+
+    if (productoError || !producto) {
+      return res.status(404).json({ success: false, message: "Producto no encontrado" });
+    }
+
+    if (producto.categoria_id !== inventario.categoria_id) {
+      return res.status(400).json({ success: false, message: "El producto no pertenece a la categoría del inventario" });
+    }
+
+    // Actualizar cantidad
+    const nuevaCantidad = producto.cantidad + cantidadSumar;
+    const { error: updateError } = await supabase
+      .from("productos")
+      .update({ cantidad: nuevaCantidad })
+      .eq("id", producto.id);
+
+    // Insertar en detalles_inventario
+    const { error: insertError } = await supabase
+      .from("detalles_inventario")
+      .insert([{ inventario_id, producto_id: producto.id, cantidad: cantidadSumar, usuario_email }]);
+
+    if (updateError || insertError) {
+      console.error("❌ Error al actualizar o insertar:", updateError || insertError);
+      return res.status(500).json({ success: false, message: "Error al registrar escaneo" });
+    }
+
+    res.json({
+      success: true,
+      descripcion: producto.descripcion,
+      cantidad: nuevaCantidad,
+    });
+  } catch (error) {
+    console.error("Error en registrarEscaneo:", error);
+    res.status(500).json({ success: false, message: `Error: ${error.message}` });
   }
-
-  // Buscar el producto
-  const { data: producto, error: productoError } = await supabase
-    .from("productos")
-    .select("*")
-    .eq("codigo_barras", codigo)
-    .single();
-
-  if (productoError || !producto) {
-    return res.status(404).json({ success: false, message: "Producto no encontrado" });
-  }
-
-  // Actualizar cantidad
-  const nuevaCantidad = producto.cantidad + cantidadSumar;
-  const { error: updateError } = await supabase
-    .from("productos")
-    .update({ cantidad: nuevaCantidad })
-    .eq("id", producto.id);
-
-  // Insertar en detalles_inventario
-  const { error: insertError } = await supabase
-    .from("detalles_inventario")
-    .insert([{
-      inventario_id,
-      producto_id: producto.id,
-      cantidad: cantidadSumar,
-      usuario: usuario || null
-    }]);
-
-  if (updateError || insertError) {
-    console.error("❌ Error al actualizar o insertar:", updateError || insertError);
-    return res.status(500).json({ success: false, message: "Error al registrar escaneo" });
-  }
-
-  res.json({
-    success: true,
-    descripcion: producto.descripcion,
-    cantidad: nuevaCantidad
-  });
 };
 
 // 🟢 Iniciar inventario
 export const iniciarInventario = async (req, res) => {
-  const { categoria, descripcion, foto_url, usuario_email } = req.body;
+  const { categoria_id, descripcion, foto_url, usuario_email } = req.body;
 
-  if (!categoria || !descripcion || !foto_url || !usuario_email) {
+  if (!categoria_id || !descripcion || !foto_url || !usuario_email) {
     return res.status(400).json({ success: false, message: "Datos incompletos" });
   }
 
-  const { data, error } = await supabase
-    .from("inventarios")
-    .insert([{ categoria, descripcion, foto_url, usuario_email }])
-    .select()
-    .single();
+  try {
+    const { data, error } = await supabase
+      .from("inventarios")
+      .insert([{ categoria_id, descripcion, foto_url, usuario_email, estado: "activo" }])
+      .select()
+      .single();
 
-  if (error) {
-    console.error("Error al insertar inventario:", error.message);
-    return res.status(500).json({ success: false, message: "Error al iniciar inventario" });
+    if (error) {
+      console.error("Error al insertar inventario:", error);
+      return res.status(500).json({ success: false, message: "Error al iniciar inventario" });
+    }
+
+    res.json({ success: true, inventario_id: data.id });
+  } catch (error) {
+    console.error("Error en iniciarInventario:", error);
+    res.status(500).json({ success: false, message: `Error: ${error.message}` });
   }
+};
 
-  res.json({ success: true, inventario_id: data.id });
+// 🟢 Finalizar inventario
+export const finalizarInventario = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const { data, error } = await supabase
+      .from("inventarios")
+      .update({ estado: "finalizado", finalizado_en: new Date().toISOString() })
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error || !data) {
+      return res.status(500).json({ success: false, message: "Error al finalizar inventario" });
+    }
+
+    res.json({ success: true, message: "Inventario finalizado correctamente" });
+  } catch (error) {
+    console.error("Error en finalizarInventario:", error);
+    res.status(500).json({ success: false, message: `Error: ${error.message}` });
+  }
 };
 
 // 🔼 Subir foto al bucket 'inventario'
@@ -107,68 +150,118 @@ export const subirFoto = async (req, res) => {
     return res.status(400).json({ success: false, message: "Archivo o nombre faltante" });
   }
 
-  const { error: uploadError } = await supabase.storage
-    .from("inventario")
-    .upload(nombreArchivo, archivo.buffer, {
-      contentType: archivo.mimetype,
-      upsert: true
-    });
+  try {
+    const { error: uploadError } = await supabase.storage
+      .from("inventario")
+      .upload(nombreArchivo, archivo.buffer, {
+        contentType: archivo.mimetype,
+        upsert: true,
+      });
 
-  if (uploadError) {
-    return res.status(500).json({ success: false, message: "Error al subir archivo" });
+    if (uploadError) {
+      console.error("Error al subir archivo:", uploadError);
+      return res.status(500).json({ success: false, message: "Error al subir archivo" });
+    }
+
+    const { data: publicUrl } = supabase.storage.from("inventario").getPublicUrl(nombreArchivo);
+
+    res.json({ success: true, url: publicUrl.publicUrl });
+  } catch (error) {
+    console.error("Error en subirFoto:", error);
+    res.status(500).json({ success: false, message: `Error: ${error.message}` });
   }
-
-  const { data: publicUrl } = supabase
-    .storage
-    .from("inventario")
-    .getPublicUrl(nombreArchivo);
-
-  res.json({ success: true, url: publicUrl.publicUrl });
 };
 
 // 📄 Historial de escaneos
 export const obtenerHistorialInventario = async (req, res) => {
   const { inventario_id } = req.params;
 
-  const { data, error } = await supabase
-    .from("detalles_inventario")
-    .select("id, cantidad, created_at, producto:producto_id(descripcion, codigo_barras)")
-    .eq("inventario_id", inventario_id)
-    .order("created_at", { ascending: false });
+  try {
+    const { data, error } = await supabase
+      .from("detalles_inventario")
+      .select("id, cantidad, created_at, producto:producto_id(descripcion, codigo_barras)")
+      .eq("inventario_id", inventario_id)
+      .order("created_at", { ascending: false });
 
-  if (error) {
-    return res.status(500).json({ success: false, message: "Error al obtener historial" });
+    if (error) {
+      console.error("Error al obtener historial:", error);
+      return res.status(500).json({ success: false, message: "Error al obtener historial" });
+    }
+
+    res.json({ success: true, historial: data });
+  } catch (error) {
+    console.error("Error en obtenerHistorialInventario:", error);
+    res.status(500).json({ success: false, message: `Error: ${error.message}` });
   }
-
-  res.json({ success: true, historial: data });
 };
 
 // ❌ Eliminar registro individual
 export const eliminarRegistroInventario = async (req, res) => {
   const { id } = req.params;
 
-  const { error } = await supabase
-    .from("detalles_inventario")
-    .delete()
-    .eq("id", id);
+  try {
+    // Obtener el registro para restar la cantidad
+    const { data: detalle, error: detalleError } = await supabase
+      .from("detalles_inventario")
+      .select("producto_id, cantidad")
+      .eq("id", id)
+      .single();
 
-  if (error) {
-    return res.status(500).json({ success: false, message: "Error al eliminar registro" });
+    if (detalleError || !detalle) {
+      return res.status(404).json({ success: false, message: "Registro no encontrado" });
+    }
+
+    // Restar la cantidad del producto
+    const { data: producto, error: productoError } = await supabase
+      .from("productos")
+      .select("cantidad")
+      .eq("id", detalle.producto_id)
+      .single();
+
+    if (productoError || !producto) {
+      return res.status(404).json({ success: false, message: "Producto no encontrado" });
+    }
+
+    const nuevaCantidad = Math.max(0, producto.cantidad - detalle.cantidad); // Evitar cantidades negativas
+    const { error: updateError } = await supabase
+      .from("productos")
+      .update({ cantidad: nuevaCantidad })
+      .eq("id", detalle.producto_id);
+
+    // Eliminar el registro
+    const { error: deleteError } = await supabase
+      .from("detalles_inventario")
+      .delete()
+      .eq("id", id);
+
+    if (updateError || deleteError) {
+      console.error("Error al eliminar registro:", updateError || deleteError);
+      return res.status(500).json({ success: false, message: "Error al eliminar registro" });
+    }
+
+    res.json({ success: true, message: "Registro eliminado correctamente" });
+  } catch (error) {
+    console.error("Error en eliminarRegistroInventario:", error);
+    res.status(500).json({ success: false, message: `Error: ${error.message}` });
   }
-
-  res.json({ success: true, message: "Registro eliminado correctamente" });
 };
 
 // 📂 Obtener categorías
 export const obtenerCategorias = async (req, res) => {
-  const { data, error } = await supabase
-    .from("categorias")
-    .select("id, nombre")
-    .order("nombre", { ascending: true });
+  try {
+    const { data, error } = await supabase
+      .from("categorias")
+      .select("id, nombre")
+      .order("nombre", { ascending: true });
 
-  if (error) {
-    return res.status(500).json({ success: false, message: "Error al obtener categorías" });
+    if (error) {
+      console.error("Error al obtener categorías:", error);
+      return res.status(500).json({ success: false, message: "Error al obtener categorías" });
+    }
+
+    res.json(data);
+  } catch (error) {
+    console.error("Error en obtenerCategorias:", error);
+    res.status(500).json({ success: false, message: `Error: ${error.message}` });
   }
-
-  res.json(data);
 };
