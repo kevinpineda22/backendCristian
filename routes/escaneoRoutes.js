@@ -3,7 +3,8 @@ import {
   registrarEscaneo,
   iniciarInventario,
   obtenerHistorialInventario,
-  eliminarRegistroInventario
+  eliminarRegistroInventario,
+  obtenerCategorias
 } from '../controllers/scannerController.js';
 
 const router = express.Router();
@@ -19,5 +20,9 @@ router.get('/historial/:inventario_id', obtenerHistorialInventario);
 
 // ❌ Eliminar un registro específico del historial
 router.delete('/registro/:id', eliminarRegistroInventario);
+
+// 🆕 Ruta para listar categorías
+router.get('/categorias', obtenerCategorias); 
+
 
 export default router;
