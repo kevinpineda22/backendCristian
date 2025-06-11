@@ -6,7 +6,7 @@ import {
   obtenerHistorialInventario,
   eliminarRegistroInventario,
   obtenerCategorias,
-  finalizarInventario, // Nuevo controlador para finalizar inventario
+  finalizarInventario, // Controlador correcto
   upload // Middleware de multer para subir fotos
 } from '../controllers/scannerController.js';
 
@@ -25,12 +25,12 @@ router.post('/subir-foto', upload, subirFoto);
 router.post('/registrar-escaneo', registrarEscaneo);
 
 // 📄 Obtener historial de escaneos por inventario
-router.get('/historial/:id', obtenerHistorialInventario);
+router.get('/historial/:inventario_id', obtenerHistorialInventario);
 
 // ❌ Eliminar registro específico del inventario
 router.delete('/eliminar/:id', eliminarRegistroInventario);
 
 // ✅ Finalizar un inventario
-router.post('/finalizar/:id', actualizarInventario);
+router.post('/finalizar-inventario/:id', finalizarInventario); // Corregido: usar finalizarInventario
 
 export default router;
