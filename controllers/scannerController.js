@@ -127,32 +127,39 @@ export const eliminarRegistroInventario = async (req, res) => {
 };
 
 // 🔼 Subir foto al bucket 'inventario'
-export const subirFoto = async (req, res) => {
-  const archivo = req.file;
-  const nombreArchivo = req.body.filename;
+export const subirFoto = [
+  storage.single("file"),
+  async (req, res) => {
+    try {
+      const file = req.file;
+      const filename = req.body.filename || `foto_${uuidv4()}.jpg`;
 
-  if (!archivo || !nombreArchivo) {
-    return res.status(400).json({ success: false, message: "Archivo o nombre faltante" });
+      if (!file) {
+        return res.status(400).json({ success: false, message: "Archivo no recibido" });
+      }
+
+      const { error: uploadError } = await supabase.storage
+        .from("inventario")
+        .upload(filename, file.buffer, {
+          contentType: file.mimetype,
+          upsert: true,
+        });
+
+      if (uploadError) {
+        return res.status(500).json({ success: false, message: "Error subiendo imagen" });
+      }
+
+      const { data: publicUrl } = supabase.storage
+        .from("inventario")
+        .getPublicUrl(filename);
+
+      res.json({ success: true, url: publicUrl.publicUrl });
+    } catch (err) {
+      console.error("Error subiendo imagen:", err);
+      res.status(500).json({ success: false, message: "Error en el servidor" });
+    }
   }
-
-  const { error } = await supabase.storage
-    .from("inventario")
-    .upload(nombreArchivo, archivo.buffer, {
-      contentType: archivo.mimetype,
-      upsert: true
-    });
-
-  if (error) {
-    return res.status(500).json({ success: false, message: "Error al subir archivo" });
-  }
-
-  const { data: publicUrl } = supabase
-    .storage
-    .from("inventario")
-    .getPublicUrl(nombreArchivo);
-
-  res.json({ success: true, url: publicUrl.publicUrl });
-};
+];
 
 // 📂 Obtener categorías
 export const obtenerCategorias = async (req, res) => {
