@@ -22,8 +22,8 @@ app.use(express.json()); // Parsear JSON en el body
 app.use(express.urlencoded({ extended: true })); // Parsear form-data para subir fotos
 
 // Rutas
-app.use('/registro', registroRoutes); // Rutas para formularios
-app.use('/historial', historialRoutes); // Rutas para historial
+app.use('/', registroRoutes); // Rutas para formularios
+app.use('/', historialRoutes); // Rutas para historial
 app.use('/escaneo', escaneoRoutes); // Rutas para escáner
 app.get('/resumen', obtenerResumenFruver); // Ruta para resumen de Fruver
 
