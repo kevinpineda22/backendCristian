@@ -3,7 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import registroRoutes from './routes/registroRoutes.js';
 import historialRoutes from './routes/historialRoutes.js';
-import escaneoRoutes from './routes/escaneoRoutes.js';
+
 import { obtenerResumenFruver } from './controllers/dashboardController.js';
 
 dotenv.config();
@@ -18,7 +18,6 @@ app.use(express.urlencoded({ extended: true }));  // Permite manejar datos de fo
 // Usar las rutas definidas
 app.use('/', registroRoutes);  // Ruta para registrar formularios
 app.use('/', historialRoutes);  // Ruta para el historial de formularios
-app.use('/', escaneoRoutes); // 🚀 Aquí montas las rutas del escáner
 
 app.get('/resumen', obtenerResumenFruver);  // Ruta para obtener el resumen de Fruver
 
