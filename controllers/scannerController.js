@@ -19,12 +19,10 @@ export const upload = multer({
 
 // 🚀 Registrar escaneo
 export const registrarEscaneo = async (req, res) => {
-  console.log("🔍 Datos recibidos en registrarEscaneo:", req.body);
-
   const { codigo, cantidad, inventario_id, usuario_email } = req.body;
 
   if (!codigo || !cantidad || !inventario_id || !usuario_email) {
-    return res.status(400).json({ success: false, message: "Datos incompletos" });
+    return res.status(400).json({ success: false, message: "Datos incompletos: código, cantidad, inventario_id y usuario_email son requeridos" });
   }
 
   const cantidadSumar = parseInt(cantidad);
@@ -36,7 +34,7 @@ export const registrarEscaneo = async (req, res) => {
     // Verificar que exista el inventario
     const { data: inventario, error: inventarioError } = await supabase
       .from("inventarios")
-      .select("id, categoria_id, estado")
+      .select("id, estado")
       .eq("id", inventario_id)
       .single();
 
@@ -48,7 +46,7 @@ export const registrarEscaneo = async (req, res) => {
       return res.status(400).json({ success: false, message: "El inventario ya está finalizado" });
     }
 
-    // Buscar el producto y verificar categoría
+    // Buscar el producto
     const { data: producto, error: productoError } = await supabase
       .from("productos")
       .select("*")
@@ -57,10 +55,6 @@ export const registrarEscaneo = async (req, res) => {
 
     if (productoError || !producto) {
       return res.status(404).json({ success: false, message: "Producto no encontrado" });
-    }
-
-    if (producto.categoria_id !== inventario.categoria_id) {
-      return res.status(400).json({ success: false, message: "El producto no pertenece a la categoría del inventario" });
     }
 
     // Actualizar cantidad
@@ -73,7 +67,7 @@ export const registrarEscaneo = async (req, res) => {
     // Insertar en detalles_inventario
     const { error: insertError } = await supabase
       .from("detalles_inventario")
-      .insert([{ inventario_id, producto_id: producto.id, cantidad: cantidadSumar, usuario_email }]);
+      .insert([{ inventario_id, producto_id: producto.id, cantidad: cantidadSumar, usuario: usuario_email }]);
 
     if (updateError || insertError) {
       console.error("❌ Error al actualizar o insertar:", updateError || insertError);
@@ -93,22 +87,31 @@ export const registrarEscaneo = async (req, res) => {
 
 // 🟢 Iniciar inventario
 export const iniciarInventario = async (req, res) => {
-  const { categoria_id, descripcion, foto_url, usuario_email } = req.body;
+  const { categoria, descripcion, foto_url, usuario_email } = req.body;
 
-  if (!categoria_id || !descripcion || !foto_url || !usuario_email) {
-    return res.status(400).json({ success: false, message: "Datos incompletos" });
+  if (!categoria) {
+    return res.status(400).json({ success: false, message: "El campo 'categoria' es requerido" });
+  }
+  if (!descripcion) {
+    return res.status(400).json({ success: false, message: "El campo 'descripcion' es requerido" });
+  }
+  if (!foto_url) {
+    return res.status(400).json({ success: false, message: "El campo 'foto_url' es requerido" });
+  }
+  if (!usuario_email) {
+    return res.status(400).json({ success: false, message: "El campo 'usuario_email' es requerido" });
   }
 
   try {
     const { data, error } = await supabase
       .from("inventarios")
-      .insert([{ categoria_id, descripcion, foto_url, usuario_email, estado: "activo" }])
+      .insert([{ categoria, descripcion, foto_url, usuario_email, estado: "activo" }])
       .select()
       .single();
 
     if (error) {
       console.error("Error al insertar inventario:", error);
-      return res.status(500).json({ success: false, message: "Error al iniciar inventario" });
+      return res.status(500).json({ success: false, message: `Error al insertar inventario: ${error.message}` });
     }
 
     res.json({ success: true, inventario_id: data.id });
@@ -118,14 +121,14 @@ export const iniciarInventario = async (req, res) => {
   }
 };
 
-// 🟢 Finalizar inventario
+// ✅ Finalizar inventario
 export const finalizarInventario = async (req, res) => {
   const { id } = req.params;
 
   try {
     const { data, error } = await supabase
       .from("inventarios")
-      .update({ estado: "finalizado", finalizado_en: new Date().toISOString() })
+      .update({ estado: "finalizado", fecha_fin: new Date().toISOString() })
       .eq("id", id)
       .select()
       .single();
@@ -179,9 +182,9 @@ export const obtenerHistorialInventario = async (req, res) => {
   try {
     const { data, error } = await supabase
       .from("detalles_inventario")
-      .select("id, cantidad, created_at, producto:producto_id(descripcion, codigo_barras)")
+      .select("id, cantidad, fecha_hora, producto:producto_id(descripcion, codigo_barras)")
       .eq("inventario_id", inventario_id)
-      .order("created_at", { ascending: false });
+      .order("fecha_hora", { ascending: false });
 
     if (error) {
       console.error("Error al obtener historial:", error);
@@ -207,7 +210,7 @@ export const eliminarRegistroInventario = async (req, res) => {
       .eq("id", id)
       .single();
 
-    if (detalleError || !detalle) {
+    if (!detalle) {
       return res.status(404).json({ success: false, message: "Registro no encontrado" });
     }
 
@@ -218,11 +221,11 @@ export const eliminarRegistroInventario = async (req, res) => {
       .eq("id", detalle.producto_id)
       .single();
 
-    if (productoError || !producto) {
+    if (!producto) {
       return res.status(404).json({ success: false, message: "Producto no encontrado" });
     }
 
-    const nuevaCantidad = Math.max(0, producto.cantidad - detalle.cantidad); // Evitar cantidades negativas
+    const nuevaCantidad = Math.max(0, producto.cantidad - detalle.cantidad);
     const { error: updateError } = await supabase
       .from("productos")
       .update({ cantidad: nuevaCantidad })
@@ -240,9 +243,9 @@ export const eliminarRegistroInventario = async (req, res) => {
     }
 
     res.json({ success: true, message: "Registro eliminado correctamente" });
-  } catch (error) {
-    console.error("Error en eliminarRegistroInventario:", error);
-    res.status(500).json({ success: false, message: `Error: ${error.message}` });
+  } catch (err) {
+    console.error("Error en eliminarRegistroInventario:", err);
+    res.status(500).json({ success: false, message: `Error: ${err.message}` });
   }
 };
 
