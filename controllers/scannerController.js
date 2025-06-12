@@ -57,6 +57,11 @@ export const registrarEscaneo = async (req, res) => {
       return res.status(404).json({ success: false, message: "Producto no encontrado" });
     }
 
+    // Validar que producto_id no sea null
+    if (!producto.id) {
+      return res.status(500).json({ success: false, message: "Error interno: producto_id no definido" });
+    }
+
     // Actualizar cantidad
     const nuevaCantidad = producto.cantidad + cantidadSumar;
     const { error: updateError } = await supabase
@@ -134,6 +139,7 @@ export const finalizarInventario = async (req, res) => {
       .single();
 
     if (error || !data) {
+      console.error("Error al finalizar inventario:", error);
       return res.status(500).json({ success: false, message: "Error al finalizar inventario" });
     }
 
@@ -188,10 +194,10 @@ export const obtenerHistorialInventario = async (req, res) => {
 
     if (error) {
       console.error("Error al obtener historial:", error);
-      return res.status(500).json({ success: false, message: "Error al obtener historial" });
+      return res.status(500).json({ success: false, message: `Error al obtener historial: ${error.message}` });
     }
 
-    res.json({ success: true, historial: data });
+    res.json({ success: true, historial: data || [] });
   } catch (error) {
     console.error("Error en obtenerHistorialInventario:", error);
     res.status(500).json({ success: false, message: `Error: ${error.message}` });
@@ -243,9 +249,9 @@ export const eliminarRegistroInventario = async (req, res) => {
     }
 
     res.json({ success: true, message: "Registro eliminado correctamente" });
-  } catch (err) {
-    console.error("Error en eliminarRegistroInventario:", err);
-    res.status(500).json({ success: false, message: `Error: ${err.message}` });
+  } catch (error) {
+    console.error("Error en eliminarRegistroInventario:", error);
+    res.status(500).json({ success: false, message: `Error: ${error.message}` });
   }
 };
 
