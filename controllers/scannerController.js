@@ -184,6 +184,7 @@ export const subirFoto = async (req, res) => {
 // 📄 Historial de escaneos
 export const obtenerHistorialInventario = async (req, res) => {
   const { inventario_id } = req.params;
+  console.log("Solicitando historial para inventario_id:", inventario_id);
 
   try {
     const { data, error } = await supabase
@@ -191,6 +192,8 @@ export const obtenerHistorialInventario = async (req, res) => {
       .select("id, cantidad, fecha_hora, producto:producto_id(descripcion, codigo_barras)")
       .eq("inventario_id", inventario_id)
       .order("fecha_hora", { ascending: false });
+
+    console.log("Resultado de Supabase:", { data, error });
 
     if (error) {
       console.error("Error al obtener historial:", error);
