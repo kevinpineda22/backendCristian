@@ -1,4 +1,5 @@
-import { getRecordsByEmail, getAllRecords, updateRecordStatusAndObservation } from '../services/supabaseService.js';
+// src/controllers/historialController.js
+import { getRecordsByEmail, getAllRecords, updateRecordStatusAndObservation, deleteRecordById } from '../services/supabaseService.js'; // Asegúrate de importar deleteRecordById
 
 const historial = async (req, res) => {
   try {
@@ -38,7 +39,6 @@ const getAllHistorial = async (req, res) => {
 const updateHistorialStatus = async (req, res) => {
   try {
     const { id, estado, observacion } = req.body;
-    // Validar que se envíen ID y estado (observación se asigna cadena vacía si es falsy)
     if (!id || !estado) {
       return res.status(400).json({ error: 'ID y estado son requeridos' });
     }
@@ -55,4 +55,27 @@ const updateHistorialStatus = async (req, res) => {
   }
 };
 
-export { historial, getAllHistorial, updateHistorialStatus };
+// --- NUEVA FUNCIÓN PARA ELIMINAR ---
+const deleteHistorialRecord = async (req, res) => {
+  try {
+    const { id } = req.params; // Obtener el ID desde los parámetros de la URL
+    if (!id) {
+      return res.status(400).json({ error: 'ID del registro es requerido para eliminar.' });
+    }
+
+    const { data, error } = await deleteRecordById(id); // Llama a la función de servicio
+    if (error) {
+      console.error('Error al eliminar el registro:', error);
+      return res.status(500).json({ error: 'Error al eliminar el registro', details: error.message });
+    }
+    // Supabase delete() no devuelve filas eliminadas por defecto, solo un objeto vacío si es exitoso
+    // Si necesitas confirmar que se eliminó algo, puedes hacer un select antes, o confiar en el 'error'
+    res.status(200).json({ message: 'Registro eliminado exitosamente.' });
+  } catch (error) {
+    console.error('Error completo al eliminar:', error);
+    res.status(500).json({ error: 'Error en el servidor al eliminar el registro', details: error.message });
+  }
+};
+// --- FIN NUEVA FUNCIÓN ---
+
+export { historial, getAllHistorial, updateHistorialStatus, deleteHistorialRecord };
