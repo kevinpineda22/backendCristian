@@ -98,7 +98,7 @@ const updateRecordStatus = async (id, estado) => {
 };
 
 // --- AÑADE ESTA FUNCIÓN Y ASEGÚRATE DE EXPORTARLA ---
-export const deleteRecordById = async (id) => {
+const deleteRecordById = async (id) => {
   const { data, error } = await supabase
     .from('Automatizacion_cristian') // ¡IMPORTANTE: Usa el nombre correcto de tu tabla!
     .delete()
