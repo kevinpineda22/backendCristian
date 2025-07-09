@@ -1,3 +1,4 @@
+// supabase.js
 import { createClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -96,4 +97,26 @@ const updateRecordStatus = async (id, estado) => {
   return { data, error };
 };
 
-export {supabase, uploadFile, getPublicUrl, insertRecord, getRecordsByEmail, getAllRecords, updateRecordStatusAndObservation, getRecordsToUpdate, updateRecordStatus };
+// --- AÑADE ESTA FUNCIÓN Y ASEGÚRATE DE EXPORTARLA ---
+export const deleteRecordById = async (id) => {
+  const { data, error } = await supabase
+    .from('Automatizacion_cristian') // ¡IMPORTANTE: Usa el nombre correcto de tu tabla!
+    .delete()
+    .eq('id', id);
+
+  return { data, error };
+};
+// --- FIN DE LA FUNCIÓN A AÑADIR ---
+
+export {
+  supabase,
+  uploadFile,
+  getPublicUrl,
+  insertRecord,
+  getRecordsByEmail,
+  getAllRecords,
+  updateRecordStatusAndObservation,
+  getRecordsToUpdate,
+  updateRecordStatus,
+  deleteRecordById // ¡ASEGÚRATE DE EXPORTARLA AQUÍ!
+};
